@@ -495,9 +495,9 @@ int main(int argc, char** argv)
   TChain* data = new TChain("data","data");
   for(auto run : runList)
   {
-    std::string inFileName = "";
-    if( pedestals ) inFileName = Form("/data/tofhir2/h8/reco/%04d/*_ped_e.root",run);
-    else            inFileName = Form("/data/tofhir2/h8/reco/%04d/*_e.root",run);
+    std::string inFileName = "/eos/cms/store/group/dpg_mtd/comm_mtd/TB/MTDTB_H8_Jul2021/TOFHIR2/h8/reco/";
+    if( pedestals ) inFileName.append(Form("%04d/*_ped_e.root",run));
+    else            inFileName.append(Form("%04d/*_e.root",run));
     data -> Add(inFileName.c_str());
   }
   int nEntries = data -> GetEntries();
@@ -535,7 +535,7 @@ int main(int argc, char** argv)
   
   //-------------------
   // create plot folder
-  std::string plotDir(Form("/var/www/html/TOFHIR2A/MTDTB_CERN_Jul21/run%s_new/",runListStr.c_str()));
+  std::string plotDir(Form("plots/",runListStr.c_str()));
   system(Form("mkdir -p %s",plotDir.c_str()));
   system(Form("mkdir -p %s/rate/",plotDir.c_str()));
   system(Form("mkdir -p %s/energy/",plotDir.c_str()));
@@ -583,7 +583,7 @@ int main(int argc, char** argv)
   
   //------------------
   // define histograms
-  TFile* outFile = new TFile(Form("plots_MTDTB_CERN_Jul2021/monitorArray_%s.root",runListStr.c_str()),"RECREATE");
+  TFile* outFile = new TFile(Form("plots/monitorArray_%s.root",runListStr.c_str()),"RECREATE");
   
   std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_L_noSel;
   std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_L_totSel;
