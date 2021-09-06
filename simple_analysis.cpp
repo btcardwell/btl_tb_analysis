@@ -590,7 +590,6 @@ int main(int argc, char** argv)
   // define histograms
   TFile* outFile = new TFile(Form("plots/monitorArray_%s.root",runListStr.c_str()),"RECREATE");
   
-  // need to learn what totSel and MIPSel actually are
   std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_L_noSel;
   std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_L_totSel;
   std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_R_noSel;
@@ -599,7 +598,6 @@ int main(int argc, char** argv)
   std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_LR_totSel;
   std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_LR_MIPSel;
 
-  // what are h2 and h1?
   std::map<float, std::map<int, std::map<int,std::map<int,TH2F*> > > > h2_rate_noSel;
   std::map<float, std::map<int, std::map<int,std::map<int,TH2F*> > > > h2_rate_totSel;
   std::map<float, std::map<int, std::map<int,std::map<int,TH1F*> > > > h1_rate_noSel;
@@ -664,7 +662,6 @@ int main(int argc, char** argv)
         if( iArray == 1 ) chL += 64;
         if( iArray == 1 ) chR += 64;
 
-        // why woud channelIdx[chL] ever be <= 0 ?
         if( channelIdx[chL] >= 0 )
         {
           eventCounter_L_noSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
