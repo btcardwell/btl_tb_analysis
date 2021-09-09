@@ -652,9 +652,9 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
     
-    for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
+    for(int iArray = 0; iArray < 2; ++iArray)
     { 
-      for( int iArray = 0; iArray < 2; ++iArray) 
+      for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
@@ -733,9 +733,9 @@ int main(int argc, char** argv)
       {
         int vth2 = mapIt3.first; 
 
-        for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
+        for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(int iArray = 0; iArray < 2; ++iArray) 
+          for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
           { 
             //std::cout << Vov << " "  << vth1 << " " << vth2 << " " << iBar << " " << iArray << std::endl;
             drawH1_energy(h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray],
@@ -820,9 +820,9 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
     
-    for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
+    for(int iArray = 0; iArray < 2; ++iArray)
     { 
-      for( int iArray = 0; iArray < 2; ++iArray) 
+      for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
@@ -875,9 +875,9 @@ int main(int argc, char** argv)
       {
         int vth2 = mapIt3.first; 
 	
-        for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
+        for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(int iArray = 0; iArray < 2; ++iArray) 
+          for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
           { 
             if( !h1_rate_MIPSel[Vov][vth1][vth2][iArray] )
             {
@@ -906,9 +906,9 @@ int main(int argc, char** argv)
       {
         int vth2 = mapIt3.first; 
 	
-        for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
+        for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(int iArray = 0; iArray < 2; ++iArray) 
+          for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
           { 
             drawH1_fitGaus(h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 3., "energy ratio", "events", plotDir+"/energyRatio/", fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], false);
             
@@ -937,9 +937,9 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
     
-    for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
+    for(int iArray = 0; iArray < 2; ++iArray)
     { 
-      for( int iArray = 0; iArray < 2; ++iArray) 
+      for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
@@ -1005,9 +1005,9 @@ int main(int argc, char** argv)
       {
         int vth2 = mapIt3.first; 
 	
-        for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
+        for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(int iArray = 0; iArray < 2; ++iArray) 
+          for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
           { 
             drawP1_fitPol(p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "energy ratio", "#DeltaT [ps]", plotDir+"/energyRatioCorr/", fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
             drawP1_fitPol(p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "ToT ratio", "#DeltaT [ps]", plotDir+"/totRatioCorr/", fit_totRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
@@ -1035,9 +1035,9 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
     
-    for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
+    for(int iArray = 0; iArray < 2; ++iArray)
     { 
-      for( int iArray = 0; iArray < 2; ++iArray) 
+      for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
@@ -1104,9 +1104,9 @@ int main(int argc, char** argv)
       {
         int vth2 = mapIt3.first; 
 	
-        for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
+        for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(int iArray = 0; iArray < 2; ++iArray) 
+          for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
           { 
             drawH1_deltaT(h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray],
                           "#Deltat [ps]", "events", plotDir+"/deltaT/",fit_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
@@ -1209,9 +1209,9 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
     
-    for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
+    for(int iArray = 0; iArray < 2; ++iArray)
     { 
-      for( int iArray = 0; iArray < 2; ++iArray) 
+      for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
