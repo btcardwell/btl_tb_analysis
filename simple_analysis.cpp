@@ -651,11 +651,17 @@ int main(int argc, char** argv)
     // are vth1 and vth2 necessarily related in this way, or is this a config choice?
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
-    
+
+    bool hit_in_upstream_bar = false;
+
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
+        // require hit in upstream bar
+        if ( iArray == 0 && iBar != 0) continue;
+        if ( iArray == 1 && !hit_in_upstream_bar) continue;
+
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
         if( iArray == 1 ) chL += 64;
@@ -664,7 +670,6 @@ int main(int argc, char** argv)
         if( channelIdx[chL] >= 0 )
         {
           eventCounter_L_noSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
-          // I don't understand why *tot is in parentheses
           if( ( (*tot)[channelIdx[chL]]/1000. >  0. ) && 
               ( (*tot)[channelIdx[chL]]/1000. <  20. ) )
             eventCounter_L_totSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;            
@@ -702,6 +707,8 @@ int main(int argc, char** argv)
         if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
         if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
         if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
+
+        if ( iArray == 0 ) hit_in_upstream_bar = true;
 
         eventCounter_LR_totSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
         
@@ -819,11 +826,17 @@ int main(int argc, char** argv)
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
-    
+
+    bool hit_in_upstream_bar = false;
+
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
+        // require hit in upstream bar
+        if ( iArray == 0 && iBar != 0) continue;
+        if ( iArray == 1 && !hit_in_upstream_bar) continue;
+
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
         if( iArray == 1 ) chL += 64;
@@ -852,6 +865,8 @@ int main(int argc, char** argv)
         TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
         if( energyMean < 0.80*func->GetParameter(1) ) continue;
         
+        if ( iArray == 0 ) hit_in_upstream_bar = true;
+
         eventCounter_LR_MIPSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
         
         h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]] );
@@ -936,11 +951,17 @@ int main(int argc, char** argv)
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
-    
+
+    bool hit_in_upstream_bar = false;
+
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
+        // require hit in upstream bar
+        if ( iArray == 0 && iBar != 0) continue;
+        if ( iArray == 1 && !hit_in_upstream_bar) continue;
+
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
         if( iArray == 1 ) chL += 64;
@@ -983,6 +1004,8 @@ int main(int argc, char** argv)
         
         float deltaT = (*time)[channelIdx[chL]] - (*time)[channelIdx[chR]];
         if( fabs(deltaT) > 2000. ) continue;
+
+        if ( iArray == 0 ) hit_in_upstream_bar = true;
         
         p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( energyRatio,deltaT );
         p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( totRatio,deltaT );
@@ -1034,11 +1057,17 @@ int main(int argc, char** argv)
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
-    
+
+    bool hit_in_upstream_bar = false;
+
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
+        // require hit in upstream bar
+        if ( iArray == 0 && iBar != 0) continue;
+        if ( iArray == 1 && !hit_in_upstream_bar) continue;
+
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
         if( iArray == 1 ) chL += 64;
@@ -1072,6 +1101,8 @@ int main(int argc, char** argv)
         float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
         TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
         if( fabs(energyRatio-func_energyRatio->GetParameter(1)) > 2.*func_energyRatio->GetParameter(2) ) continue;
+
+        if ( iArray == 0 ) hit_in_upstream_bar = true;
         
         TF1* func_energyRatioCorr = fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray];
         float deltaT = (*time)[channelIdx[chL]] - (*time)[channelIdx[chR]];
@@ -1208,25 +1239,31 @@ int main(int argc, char** argv)
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
-    
+
+    bool hit_in_upstream_bar = false;
+
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
+        // require hit in upstream bar
+        if ( iArray == 0 && iBar != 0) continue;
+        if ( iArray == 1 && !hit_in_upstream_bar) continue;
+
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
         if( iArray == 1 ) chL += 64;
         if( iArray == 1 ) chR += 64;
-        
+
         if( channelIdx[chL] < 0 ) continue;
         if( channelIdx[chR] < 0 ) continue;
-	
+
         if( !h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] )
         {
           outFile -> cd();
 
           h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_deltaT_energyRatioPhaseCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-5000.,5000.);
-  
+
           fit_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_deltaT_energyRatioPhaseCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",-5000.,5000.);
         }
 
@@ -1234,15 +1271,17 @@ int main(int argc, char** argv)
         if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
         if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
         if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-        
+
         float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
         TF1* func_energy = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
         if( energyMean < 0.80*func_energy->GetParameter(1) ) continue;
-        
+
         float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
         TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
         if( fabs(energyRatio-func_energyRatio->GetParameter(1)) > 2.*func_energyRatio->GetParameter(2) ) continue;
-        
+
+        if ( iArray == 0 ) hit_in_upstream_bar = true;
+
         TF1* func_energyRatioCorr = fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray];
         float deltaT = (*time)[channelIdx[chL]] - (*time)[channelIdx[chR]];
         float deltaT_energyRatioCorr = deltaT - func_energyRatioCorr->Eval(energyRatio) + func_energyRatioCorr->Eval(func_energyRatio->GetParameter(1));
