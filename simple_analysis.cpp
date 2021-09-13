@@ -570,11 +570,8 @@ int main(int argc, char** argv)
 
   //------------------
   // define channel mapping
-  //std::vector<int> ch_array_side1 = {14,12,10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9,11,13,15};
-  //std::vector<int> ch_array_side2 = {17,19,21,23,25,27,29,31,30,28,26,24,22,20,18,16};
-  // just run over bar 8
-  std::vector<int> ch_array_side1 = { 1};
-  std::vector<int> ch_array_side2 = {30};
+  std::vector<int> ch_array_side1 = {14,12,10, 8, 6, 4, 2, 0, 1, 3, 5, 7, 9,11,13,15};
+  std::vector<int> ch_array_side2 = {17,19,21,23,25,27,29,31,30,28,26,24,22,20,18,16};
   int num_bars = ch_array_side1.size();
   std::vector<std::string> ch_labels_array0;
   std::vector<std::string> ch_labels_array1;
@@ -635,7 +632,6 @@ int main(int argc, char** argv)
   std::map<float, std::map<int, std::map<int, std::map<int,TProfile*> > > > p1_deltaT_energyRatioCorr_vs_t1fine;
 
 
-
   //---------------------
   // 1st loop over events
   for(int entry = 0; entry < nEntries; ++entry)
@@ -648,7 +644,6 @@ int main(int argc, char** argv)
     }      
     
     float Vov = step1;
-    // are vth1 and vth2 necessarily related in this way, or is this a config choice?
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
 
@@ -656,16 +651,43 @@ int main(int argc, char** argv)
 
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
+      // get array energy for shower rejection
+      float energy_array = 0.0;
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
+        int chL = ch_array_side1[iBar];
+        int chR = ch_array_side2[iBar];
+        if( iArray == 1 ) chL += 64;
+        if( iArray == 1 ) chR += 64;
+        
+        if( channelIdx[chL] < 0 ) continue;
+        if( channelIdx[chR] < 0 ) continue;
+	
+        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
+
+        energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+      }
+
+      for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+      { 
         // require hit in upstream bar
-        if ( iArray == 0 && iBar != 0) continue;
+        if ( iArray == 0 && iBar != 8) continue;
         if ( iArray == 1 && !hit_in_upstream_bar) continue;
 
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
         if( iArray == 1 ) chL += 64;
         if( iArray == 1 ) chR += 64;
+
+        if( channelIdx[chL] < 0 ) continue;
+        if( channelIdx[chR] < 0 ) continue;
+
+        // reject shower events
+        float energy_LR = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+        if( energy_LR < 0.8*energy_array ) continue;
 
         if( channelIdx[chL] >= 0 )
         {
@@ -682,9 +704,17 @@ int main(int argc, char** argv)
             eventCounter_R_totSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;            
         }
         
-        if( channelIdx[chL] < 0 ) continue;
-        if( channelIdx[chR] < 0 ) continue;
-	
+        eventCounter_LR_noSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
+
+        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
+
+        eventCounter_LR_totSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
+
+        if ( iArray == 0 ) hit_in_upstream_bar = true;
+
         if( !h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] )
         {
           outFile -> cd();
@@ -700,22 +730,11 @@ int main(int argc, char** argv)
           fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_energy_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),langaufun,0.,1000.,4);
           fit_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_tot_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,20.);
         }
-
-        eventCounter_LR_noSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
-
-        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-
-        if ( iArray == 0 ) hit_in_upstream_bar = true;
-
-        eventCounter_LR_totSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
         
         h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chL]] );
         h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chR]] );
-        h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) );
-        
+        h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( energy_LR );
+
         h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chL]]/1000. );
         h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chR]]/1000. );
         h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( 0.5*((*tot)[channelIdx[chL]]+(*tot)[channelIdx[chR]])/1000. );        
@@ -742,7 +761,7 @@ int main(int argc, char** argv)
 
         for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
+          for(unsigned int iBar = 8; iBar < 9; ++iBar) 
           { 
             //std::cout << Vov << " "  << vth1 << " " << vth2 << " " << iBar << " " << iArray << std::endl;
             drawH1_energy(h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray],
@@ -831,12 +850,10 @@ int main(int argc, char** argv)
 
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
+      // get array energy for shower rejection
+      float energy_array = 0.0;
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
-        // require hit in upstream bar
-        if ( iArray == 0 && iBar != 0) continue;
-        if ( iArray == 1 && !hit_in_upstream_bar) continue;
-
         int chL = ch_array_side1[iBar];
         int chR = ch_array_side2[iBar];
         if( iArray == 1 ) chL += 64;
@@ -844,6 +861,31 @@ int main(int argc, char** argv)
         
         if( channelIdx[chL] < 0 ) continue;
         if( channelIdx[chR] < 0 ) continue;
+	
+        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
+
+        energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+      }
+      for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+      { 
+        // require hit in upstream bar
+        if ( iArray == 0 && iBar != 8) continue;
+        if ( iArray == 1 && !hit_in_upstream_bar) continue;
+
+        int chL = ch_array_side1[iBar];
+        int chR = ch_array_side2[iBar];
+        if( iArray == 1 ) chL += 64;
+        if( iArray == 1 ) chR += 64;
+
+        if( channelIdx[chL] < 0 ) continue;
+        if( channelIdx[chR] < 0 ) continue;
+
+        // reject shower events
+        float energy_LR = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+        if( energy_LR < 0.8*energy_array ) continue;
 	
         if( !h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] )
         {
@@ -892,7 +934,7 @@ int main(int argc, char** argv)
 	
         for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
+          for(unsigned int iBar = 8; iBar < 9; ++iBar) 
           { 
             if( !h1_rate_MIPSel[Vov][vth1][vth2][iArray] )
             {
@@ -923,7 +965,7 @@ int main(int argc, char** argv)
 	
         for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
+          for(unsigned int iBar = 8; iBar < 9; ++iBar) 
           { 
             drawH1_fitGaus(h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 3., "energy ratio", "events", plotDir+"/energyRatio/", fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], false);
             
@@ -956,10 +998,29 @@ int main(int argc, char** argv)
 
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
+      // get array energy for shower rejection
+      float energy_array = 0.0;
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
+        int chL = ch_array_side1[iBar];
+        int chR = ch_array_side2[iBar];
+        if( iArray == 1 ) chL += 64;
+        if( iArray == 1 ) chR += 64;
+        
+        if( channelIdx[chL] < 0 ) continue;
+        if( channelIdx[chR] < 0 ) continue;
+	
+        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
+
+        energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+      }
+      for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+      { 
         // require hit in upstream bar
-        if ( iArray == 0 && iBar != 0) continue;
+        if ( iArray == 0 && iBar != 8) continue;
         if ( iArray == 1 && !hit_in_upstream_bar) continue;
 
         int chL = ch_array_side1[iBar];
@@ -969,6 +1030,10 @@ int main(int argc, char** argv)
         
         if( channelIdx[chL] < 0 ) continue;
         if( channelIdx[chR] < 0 ) continue;
+
+        // reject shower events
+        float energy_LR = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+        if( energy_LR < 0.8*energy_array ) continue;
 	
         if( !p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] )
         {
@@ -1030,7 +1095,7 @@ int main(int argc, char** argv)
 	
         for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
+          for(unsigned int iBar = 8; iBar < 9; ++iBar) 
           { 
             drawP1_fitPol(p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "energy ratio", "#DeltaT [ps]", plotDir+"/energyRatioCorr/", fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
             drawP1_fitPol(p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "ToT ratio", "#DeltaT [ps]", plotDir+"/totRatioCorr/", fit_totRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
@@ -1062,10 +1127,29 @@ int main(int argc, char** argv)
 
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
+      // get array energy for shower rejection
+      float energy_array = 0.0;
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
+        int chL = ch_array_side1[iBar];
+        int chR = ch_array_side2[iBar];
+        if( iArray == 1 ) chL += 64;
+        if( iArray == 1 ) chR += 64;
+        
+        if( channelIdx[chL] < 0 ) continue;
+        if( channelIdx[chR] < 0 ) continue;
+	
+        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
+
+        energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+      }
+      for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+      { 
         // require hit in upstream bar
-        if ( iArray == 0 && iBar != 0) continue;
+        if ( iArray == 0 && iBar != 8) continue;
         if ( iArray == 1 && !hit_in_upstream_bar) continue;
 
         int chL = ch_array_side1[iBar];
@@ -1075,6 +1159,10 @@ int main(int argc, char** argv)
         
         if( channelIdx[chL] < 0 ) continue;
         if( channelIdx[chR] < 0 ) continue;
+
+        // reject shower events
+        float energy_LR = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+        if( energy_LR < 0.8*energy_array ) continue;
 	
         if( !h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] )
         {
@@ -1137,7 +1225,7 @@ int main(int argc, char** argv)
 	
         for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
+          for(unsigned int iBar = 8; iBar < 9; ++iBar) 
           { 
             drawH1_deltaT(h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray],
                           "#Deltat [ps]", "events", plotDir+"/deltaT/",fit_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
@@ -1244,10 +1332,29 @@ int main(int argc, char** argv)
 
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
+      // get array energy for shower rejection
+      float energy_array = 0.0;
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
       { 
+        int chL = ch_array_side1[iBar];
+        int chR = ch_array_side2[iBar];
+        if( iArray == 1 ) chL += 64;
+        if( iArray == 1 ) chR += 64;
+        
+        if( channelIdx[chL] < 0 ) continue;
+        if( channelIdx[chR] < 0 ) continue;
+	
+        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
+        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
+
+        energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+      }
+      for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+      { 
         // require hit in upstream bar
-        if ( iArray == 0 && iBar != 0) continue;
+        if ( iArray == 0 && iBar != 8) continue;
         if ( iArray == 1 && !hit_in_upstream_bar) continue;
 
         int chL = ch_array_side1[iBar];
@@ -1257,6 +1364,10 @@ int main(int argc, char** argv)
 
         if( channelIdx[chL] < 0 ) continue;
         if( channelIdx[chR] < 0 ) continue;
+
+        // reject shower events
+        float energy_LR = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+        if( energy_LR < 0.8*energy_array ) continue;
 
         if( !h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] )
         {
@@ -1312,7 +1423,7 @@ int main(int argc, char** argv)
       {
         int vth2 = mapIt3.first; 
 	
-        for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
+        for(unsigned int iBar = 8; iBar < 9; ++iBar) 
         { 
           for(int iArray = 0; iArray < 2; ++iArray) 
           { 
