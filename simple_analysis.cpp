@@ -671,7 +671,7 @@ int main(int argc, char** argv)
         energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       }
 
-      for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+      for(unsigned int iBar = 8; iBar < 9; ++iBar)
       { 
         // require hit in upstream bar
         if ( iArray == 0 && iBar != 8) continue;
@@ -761,7 +761,7 @@ int main(int argc, char** argv)
 
         for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+          for(unsigned int iBar = 8; iBar < 9; ++iBar)
           { 
             //std::cout << Vov << " "  << vth1 << " " << vth2 << " " << iBar << " " << iArray << std::endl;
             drawH1_energy(h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray],
@@ -869,7 +869,7 @@ int main(int argc, char** argv)
 
         energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       }
-      for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+      for(unsigned int iBar = 8; iBar < 9; ++iBar)
       { 
         // require hit in upstream bar
         if ( iArray == 0 && iBar != 8) continue;
@@ -934,7 +934,7 @@ int main(int argc, char** argv)
 	
         for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+          for(unsigned int iBar = 8; iBar < 9; ++iBar)
           { 
             if( !h1_rate_MIPSel[Vov][vth1][vth2][iArray] )
             {
@@ -965,7 +965,7 @@ int main(int argc, char** argv)
 	
         for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+          for(unsigned int iBar = 8; iBar < 9; ++iBar)
           { 
             drawH1_fitGaus(h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 3., "energy ratio", "events", plotDir+"/energyRatio/", fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], false);
             
@@ -1017,7 +1017,7 @@ int main(int argc, char** argv)
 
         energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       }
-      for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+      for(unsigned int iBar = 8; iBar < 9; ++iBar)
       { 
         // require hit in upstream bar
         if ( iArray == 0 && iBar != 8) continue;
@@ -1095,7 +1095,7 @@ int main(int argc, char** argv)
 	
         for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+          for(unsigned int iBar = 8; iBar < 9; ++iBar)
           { 
             drawP1_fitPol(p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "energy ratio", "#DeltaT [ps]", plotDir+"/energyRatioCorr/", fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
             drawP1_fitPol(p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "ToT ratio", "#DeltaT [ps]", plotDir+"/totRatioCorr/", fit_totRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
@@ -1146,7 +1146,7 @@ int main(int argc, char** argv)
 
         energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       }
-      for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+      for(unsigned int iBar = 8; iBar < 9; ++iBar)
       { 
         // require hit in upstream bar
         if ( iArray == 0 && iBar != 8) continue;
@@ -1225,7 +1225,7 @@ int main(int argc, char** argv)
 	
         for(int iArray = 0; iArray < 2; ++iArray)
         { 
-          for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+          for(unsigned int iBar = 8; iBar < 9; ++iBar)
           { 
             drawH1_deltaT(h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray],
                           "#Deltat [ps]", "events", plotDir+"/deltaT/",fit_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
@@ -1351,7 +1351,7 @@ int main(int argc, char** argv)
 
         energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       }
-      for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+      for(unsigned int iBar = 8; iBar < 9; ++iBar)
       { 
         // require hit in upstream bar
         if ( iArray == 0 && iBar != 8) continue;
@@ -1423,7 +1423,7 @@ int main(int argc, char** argv)
       {
         int vth2 = mapIt3.first; 
 	
-        for(unsigned int iBar = 8; iBar < 9; ++iBar) 
+        for(unsigned int iBar = 8; iBar < 9; ++iBar)
         { 
           for(int iArray = 0; iArray < 2; ++iArray) 
           { 
