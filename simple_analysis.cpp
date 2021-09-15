@@ -584,7 +584,7 @@ int main(int argc, char** argv)
 
   //------------------
   // define histograms
-  TFile* outFile = new TFile(Form("plots/monitorArray_%s.root",runListStr.c_str()),"RECREATE");
+  TFile* outFile = new TFile(Form("plots/simple_analysis__%s.root",runListStr.c_str()),"RECREATE");
   
   std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_L_noSel;
   std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_L_totSel;
@@ -1078,8 +1078,8 @@ int main(int argc, char** argv)
     } 
   }
   std::cout << std::endl;
-  
-  
+
+
   //---------------
   // draw 3rd plots
   for(auto mapIt : p1_deltaT_vs_energyRatio )
@@ -1166,7 +1166,7 @@ int main(int argc, char** argv)
 	
         if( !h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] )
         {
-	  outFile -> cd();
+          outFile -> cd();
 	  
           h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_deltaT_raw_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-5000.,5000.);
           h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_deltaT_energyRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-5000.,5000.);
