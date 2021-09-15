@@ -629,6 +629,8 @@ int main(int argc, char** argv)
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_deltaT_energyRatioCorr;
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_deltaT_energyRatioPhaseCorr;
 
+  std::map<float, std::map<int, std::map<int, TH1F*> > > h1_delta_tFineAvg_raw;
+
   std::map<float, std::map<int, std::map<int, std::map<int,TProfile*> > > > p1_deltaT_energyRatioCorr_vs_t1fine;
 
 
@@ -996,6 +998,11 @@ int main(int argc, char** argv)
 
     bool hit_in_upstream_bar = false;
 
+    if( !h1_delta_tFineAvg_raw[Vov][vth1][vth2] )
+        h1_delta_tFineAvg_raw[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_raw_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",500,-500.,500.);
+
+    float tFineAvg0 = 0.0; // for delta_tAvg calculation
+
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
       // get array energy for shower rejection
@@ -1017,6 +1024,7 @@ int main(int argc, char** argv)
 
         energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       }
+
       for(unsigned int iBar = 8; iBar < 9; ++iBar)
       { 
         // require hit in upstream bar
@@ -1074,6 +1082,27 @@ int main(int argc, char** argv)
         
         p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( energyRatio,deltaT );
         p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( totRatio,deltaT );
+
+        float tAvg = 0.5*((*time)[channelIdx[chL]] + (*time)[channelIdx[chR]]);
+        float tFineAvg = 0.5*((*t1fine)[channelIdx[chL]] + (*t1fine)[channelIdx[chR]]);
+
+        //if( entry%1000 == 0 )
+        //{
+        //  std::cout << std::fixed << "array: " << iArray << ", tAvg: " << tAvg << ", tFineAvg: " << tFineAvg << std::endl;
+        //}
+
+        if( iArray == 0) tFineAvg0 = tFineAvg;
+        if( iArray == 1)
+        {
+          float delta_tFineAvg = tFineAvg - tFineAvg0;
+          h1_delta_tFineAvg_raw[Vov][vth1][vth2] -> Fill( 1e38 * delta_tFineAvg );
+          if( entry%1000 == 0 )
+          {
+            std::cout << "t1: " << tFineAvg << ", t0: " << tFineAvg0 << ", deltaT: " << delta_tFineAvg << std::endl;
+          }
+        }
+
+
       } 
     } 
   }
@@ -1099,8 +1128,10 @@ int main(int argc, char** argv)
           { 
             drawP1_fitPol(p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "energy ratio", "#DeltaT [ps]", plotDir+"/energyRatioCorr/", fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
             drawP1_fitPol(p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "ToT ratio", "#DeltaT [ps]", plotDir+"/totRatioCorr/", fit_totRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
+
           }
         }
+        drawH1(h1_delta_tFineAvg_raw[Vov][vth1][vth2], "t_{avg} [ps]", "events", plotDir+"/deltaT/");
       }
     }
   }
@@ -1374,7 +1405,6 @@ int main(int argc, char** argv)
           outFile -> cd();
 
           h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_deltaT_energyRatioPhaseCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-5000.,5000.);
-
           fit_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_deltaT_energyRatioPhaseCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",-5000.,5000.);
         }
 
@@ -1399,7 +1429,6 @@ int main(int argc, char** argv)
 	
         float t1fineAve = 0.5*( (*t1fine)[channelIdx[chL]] + (*t1fine)[channelIdx[chR]] );
         TProfile* prof = p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray];
-	
         h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( deltaT_energyRatioCorr - prof->GetBinContent(prof->FindBin(t1fineAve)) );
       }
     } 
