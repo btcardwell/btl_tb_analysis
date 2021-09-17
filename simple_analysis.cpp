@@ -537,7 +537,6 @@ int main(int argc, char** argv)
   // create plot folder
   std::string plotDir(Form("plots/",runListStr.c_str()));
   system(Form("mkdir -p %s",plotDir.c_str()));
-  system(Form("mkdir -p %s/rate/",plotDir.c_str()));
   system(Form("mkdir -p %s/energy/",plotDir.c_str()));
   system(Form("mkdir -p %s/energyRatio/",plotDir.c_str()));
   system(Form("mkdir -p %s/tot/",plotDir.c_str()));
@@ -585,20 +584,6 @@ int main(int argc, char** argv)
   //------------------
   // define histograms
   TFile* outFile = new TFile(Form("plots/simple_analysis_%s.root",runListStr.c_str()),"RECREATE");
-  
-  std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_L_noSel;
-  std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_L_totSel;
-  std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_R_noSel;
-  std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_R_totSel;
-  std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_LR_noSel;
-  std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_LR_totSel;
-  std::map<float, std::map<int, std::map<int,std::map<int,int> > > > eventCounter_LR_MIPSel;
-
-  std::map<float, std::map<int, std::map<int,std::map<int,TH2F*> > > > h2_rate_noSel;
-  std::map<float, std::map<int, std::map<int,std::map<int,TH2F*> > > > h2_rate_totSel;
-  std::map<float, std::map<int, std::map<int,std::map<int,TH1F*> > > > h1_rate_noSel;
-  std::map<float, std::map<int, std::map<int,std::map<int,TH1F*> > > > h1_rate_totSel;
-  std::map<float, std::map<int, std::map<int,std::map<int,TH1F*> > > > h1_rate_MIPSel;
   
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_energy_L;
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_energy_R;
@@ -650,10 +635,15 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
 
-    bool hit_in_upstream_bar = false;
+    std::vector<bool> hit_in_array = {false, false};
+
+    // only look at bar 8 to restrict spatial distribution of hits
+    int iBar = 8;
 
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
+      if( iArray == 1 && !hit_in_array[0] ) continue;
+
       // get array energy for shower rejection
       float energy_array = 0.0;
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
@@ -674,75 +664,59 @@ int main(int argc, char** argv)
         energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       }
 
-      for(unsigned int iBar = 8; iBar < 9; ++iBar)
-      { 
-        // require hit in upstream bar
-        if ( iArray == 0 && iBar != 8) continue;
-        if ( iArray == 1 && !hit_in_upstream_bar) continue;
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
 
-        int chL = ch_array_side1[iBar];
-        int chR = ch_array_side2[iBar];
-        if( iArray == 1 ) chL += 64;
-        if( iArray == 1 ) chR += 64;
+      if( channelIdx[chL] < 0 ) continue;
+      if( channelIdx[chR] < 0 ) continue;
 
-        if( channelIdx[chL] < 0 ) continue;
-        if( channelIdx[chR] < 0 ) continue;
+      // reject shower events
+      if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
 
-        // reject shower events
-        float energy_LR = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-        if( energy_LR < 0.8*energy_array ) continue;
+      if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
+      if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
+      if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
+      if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
 
-        if( channelIdx[chL] >= 0 )
-        {
-          eventCounter_L_noSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
-          if( ( (*tot)[channelIdx[chL]]/1000. >  0. ) && 
-              ( (*tot)[channelIdx[chL]]/1000. <  20. ) )
-            eventCounter_L_totSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;            
-        }
-        if( channelIdx[chR] >= 0 )
-        {
-          eventCounter_R_noSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
-          if( ( (*tot)[channelIdx[chR]]/1000. >  0. ) && 
-              ( (*tot)[channelIdx[chR]]/1000. <  20. ) )
-            eventCounter_R_totSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;            
-        }
+      hit_in_array[iArray] = true;
+    }
+
+    // fill plots for each array only if both have hits
+    if( !hit_in_array[0] || !hit_in_array[1] ) continue;
+
+    for(int iArray = 0; iArray < 2; ++iArray)
+    { 
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
+
+      if( !h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] )
+      {
+        outFile -> cd();
+
+        h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_energy_L_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",500,-0.5,999.5);
+        h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_energy_R_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",500,-0.5,999.5);
+        h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_energy_LR_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-0.5,999.5);
         
-        eventCounter_LR_noSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
-
-        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-
-        eventCounter_LR_totSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
-
-        if ( iArray == 0 ) hit_in_upstream_bar = true;
-
-        if( !h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] )
-        {
-          outFile -> cd();
-
-          h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_energy_L_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",500,-0.5,999.5);
-          h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_energy_R_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",500,-0.5,999.5);
-          h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_energy_LR_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-0.5,999.5);
-          
-          h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_tot_L_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",100,0.,20.);
-          h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_tot_R_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",100,0.,20.);
-          h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_tot_LR_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",100,0.,20.);
-          
-          fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_energy_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),langaufun,0.,1000.,4);
-          fit_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_tot_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,20.);
-        }
+        h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_tot_L_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",100,0.,20.);
+        h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_tot_R_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",100,0.,20.);
+        h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_tot_LR_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",100,0.,20.);
         
-        h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chL]] );
-        h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chR]] );
-        h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( energy_LR );
-
-        h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chL]]/1000. );
-        h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chR]]/1000. );
-        h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( 0.5*((*tot)[channelIdx[chL]]+(*tot)[channelIdx[chR]])/1000. );        
+        fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_energy_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),langaufun,0.,1000.,4);
+        fit_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_tot_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,20.);
       }
-    } 
+      
+      h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chL]] );
+      h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chR]] );
+      h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) );
+
+      h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chL]]/1000. );
+      h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chR]]/1000. );
+      h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( 0.5*((*tot)[channelIdx[chL]]+(*tot)[channelIdx[chR]])/1000. );        
+    }
   }
   std::cout << std::endl;
 
@@ -766,34 +740,11 @@ int main(int argc, char** argv)
         { 
           for(unsigned int iBar = 8; iBar < 9; ++iBar)
           { 
-            //std::cout << Vov << " "  << vth1 << " " << vth2 << " " << iBar << " " << iArray << std::endl;
             drawH1_energy(h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray],
                           0., 1000, "energy [ADC]", "events", plotDir+"/energy/", fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
-            //std::cout << "qui1" << std::endl;
             drawH1_energy(h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray],
                           0., 1000, "ToT [ns]", "events", plotDir+"/tot/", fit_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
-            //std::cout << "qui2" << std::endl;            
-            if( !h1_rate_noSel[Vov][vth1][vth2][iArray] )
-            {
-              outFile -> cd();
-	      
-              h2_rate_noSel[Vov][vth1][vth2][iArray]  = new TH2F(Form("h2_rate_noSel_array%d_Vov%.1f_vth1_%02d_vth2_%02d",iArray,Vov,vth1,vth2),"",3,-0.5,2.5,num_bars,-0.5,15.5); 
-              h2_rate_totSel[Vov][vth1][vth2][iArray] = new TH2F(Form("h2_rate_totSel_array%d_Vov%.1f_vth1_%02d_vth2_%02d",iArray,Vov,vth1,vth2),"",3,-0.5,2.5,num_bars,-0.5,15.5);
-              
-              h1_rate_noSel[Vov][vth1][vth2][iArray]  = new TH1F(Form("h1_rate_noSel_array%d_Vov%.1f_vth1_%02d_vth2_%02d",iArray,Vov,vth1,vth2),"",num_bars,-0.5,15.5);
-              h1_rate_totSel[Vov][vth1][vth2][iArray] = new TH1F(Form("h1_rate_totSel_array%d_Vov%.1f_vth1_%02d_vth2_%02d",iArray,Vov,vth1,vth2),"",num_bars,-0.5,15.5);
-            }
 
-            h2_rate_noSel[Vov][vth1][vth2][iArray] -> SetBinContent(h2_rate_noSel[Vov][vth1][vth2][iArray]->FindBin(0.,iBar),eventCounter_L_noSel[Vov][vth1][vth2][iBar+num_bars*iArray]/timeScaled);
-            h2_rate_noSel[Vov][vth1][vth2][iArray] -> SetBinContent(h2_rate_noSel[Vov][vth1][vth2][iArray]->FindBin(1.,iBar),eventCounter_LR_noSel[Vov][vth1][vth2][iBar+num_bars*iArray]/timeScaled);
-            h2_rate_noSel[Vov][vth1][vth2][iArray] -> SetBinContent(h2_rate_noSel[Vov][vth1][vth2][iArray]->FindBin(2.,iBar),eventCounter_R_noSel[Vov][vth1][vth2][iBar+num_bars*iArray]/timeScaled);
-            h2_rate_totSel[Vov][vth1][vth2][iArray] -> SetBinContent(h2_rate_totSel[Vov][vth1][vth2][iArray]->FindBin(0.,iBar),eventCounter_L_totSel[Vov][vth1][vth2][iBar+num_bars*iArray]/timeScaled);
-            h2_rate_totSel[Vov][vth1][vth2][iArray] -> SetBinContent(h2_rate_totSel[Vov][vth1][vth2][iArray]->FindBin(1.,iBar),eventCounter_LR_totSel[Vov][vth1][vth2][iBar+num_bars*iArray]/timeScaled);
-            h2_rate_totSel[Vov][vth1][vth2][iArray] -> SetBinContent(h2_rate_totSel[Vov][vth1][vth2][iArray]->FindBin(2.,iBar),eventCounter_R_totSel[Vov][vth1][vth2][iBar+num_bars*iArray]/timeScaled);
-
-            h1_rate_noSel[Vov][vth1][vth2][iArray] -> SetBinContent(iBar+1,eventCounter_LR_noSel[Vov][vth1][vth2][iBar+num_bars*iArray]/timeScaled);
-            h1_rate_totSel[Vov][vth1][vth2][iArray] -> SetBinContent(iBar+1,eventCounter_LR_totSel[Vov][vth1][vth2][iBar+num_bars*iArray]/timeScaled);
-            
             if( fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] == NULL ) continue;
             
             if( !g_energyPeak[Vov][vth1][vth2][iArray] )
@@ -804,18 +755,10 @@ int main(int argc, char** argv)
             g_energyPeak[Vov][vth1][vth2][iArray] -> SetPoint(g_energyPeak[Vov][vth1][vth2][iArray]->GetN(),iBar,fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(1));
           }
         }
-        
-        drawH1_arrays(h1_rate_noSel[Vov][vth1][vth2][0],h1_rate_noSel[Vov][vth1][vth2][1], "iBar", "rate [kHz]", plotDir+"/rate/", false, Form("h1_rate_noSel_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2), 0., false);  
-        drawH1_arrays(h1_rate_totSel[Vov][vth1][vth2][0],h1_rate_totSel[Vov][vth1][vth2][1], "iBar", "rate [kHz]", plotDir+"/rate/", false, Form("h1_rate_totSel_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2), 0., false);  
-        
-        drawH2(h2_rate_noSel[Vov][vth1][vth2][0], "SiPM side", "iBar", "rate [kHz]", plotDir+"/rate/", ch_labels_array0, false, Form("h2_rate_noSel_array0_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2));
-        drawH2(h2_rate_totSel[Vov][vth1][vth2][0], "SiPM side", "iBar", "rate [kHz]", plotDir+"/rate/", ch_labels_array0, false, Form("h2_rate_totSel_array0_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2));
-        drawH2(h2_rate_noSel[Vov][vth1][vth2][1], "SiPM side", "iBar", "rate [kHz]", plotDir+"/rate/", ch_labels_array1, false, Form("h2_rate_noSel_array1_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2));
-        drawH2(h2_rate_totSel[Vov][vth1][vth2][1], "SiPM side", "iBar", "rate [kHz]", plotDir+"/rate/", ch_labels_array1, false, Form("h2_rate_totSel_array1_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2));
       }
     }
   }
-  
+
   for(auto mapIt : h1_energy_LR )
   {
     float Vov = mapIt.first;
@@ -826,7 +769,7 @@ int main(int argc, char** argv)
       for(auto mapIt3 : mapIt2.second)
       {
         int vth2 = mapIt3.first; 
-	
+
         drawG_arrays(g_energyPeak[Vov][vth1][vth2][0],g_energyPeak[Vov][vth1][vth2][1], "iBar", "MIP peak [ADC]", 0., 800., plotDir+"/energy/",false,Form("g_energyPeak_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2));
       }
     }
@@ -849,12 +792,18 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
 
-    bool hit_in_upstream_bar = false;
+    std::vector<bool> hit_in_array = {false, false};
 
-    long long tAvg0 = 0.0; // for delta_tAvg calculation
+    // only look at bar 8 to restrict spatial distribution of hits
+    int iBar = 8;
+
+    // for delta_tAvg calculation
+    std::vector<long long> tAvg = {0, 0};
 
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
+      if( iArray == 1 && !hit_in_array[0] ) continue;
+
       // get array energy for shower rejection
       float energy_array = 0.0;
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
@@ -874,66 +823,64 @@ int main(int argc, char** argv)
 
         energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       }
-      for(unsigned int iBar = 8; iBar < 9; ++iBar)
-      { 
-        // require hit in upstream bar
-        if ( iArray == 0 && iBar != 8) continue;
-        if ( iArray == 1 && !hit_in_upstream_bar) continue;
 
-        int chL = ch_array_side1[iBar];
-        int chR = ch_array_side2[iBar];
-        if( iArray == 1 ) chL += 64;
-        if( iArray == 1 ) chR += 64;
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
 
-        if( channelIdx[chL] < 0 ) continue;
-        if( channelIdx[chR] < 0 ) continue;
+      if( channelIdx[chL] < 0 ) continue;
+      if( channelIdx[chR] < 0 ) continue;
 
-        // reject shower events
-        float energy_LR = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-        if( energy_LR < 0.8*energy_array ) continue;
-	
-        if( !h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] )
-        {
-          outFile -> cd();
-	  
-          h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_energyRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,0.5,1.5);
-          h1_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,0.5,1.5);
+      // reject shower events
+      if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
 
-          fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_energyRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,1000.);
-          fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,20.);
-        }
-        if(!h1_delta_tAvg_raw[Vov][vth1][vth2])
-        {
-          h1_delta_tAvg_raw[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_raw_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",1000,0.,2000.);
-          fit_delta_tAvg_raw[Vov][vth1][vth2] = new TF1(Form("fit_delta_tAvg_raw_Vov%.1f_vth1_%02d_vth2_%02d", Vov,vth1,vth2),"gaus(0)",0.,2000.);
-        }
+      if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
+      if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
+      if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
+      if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
 
-        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-        
-        float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-        TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
-        if( energyMean < 0.80*func->GetParameter(1) ) continue;
-        
-        if ( iArray == 0 ) hit_in_upstream_bar = true;
+      float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+      TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
+      if( energyMean < 0.80*func->GetParameter(1) ) continue;
 
-        eventCounter_LR_MIPSel[Vov][vth1][vth2][iBar+num_bars*iArray] += 1;
-        
-        h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]] );
-        h1_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chL]]/(*tot)[channelIdx[chR]] );
+      hit_in_array[iArray] = true;
+    }
 
-        long long tAvg = 0.5*((*time)[channelIdx[chL]] + (*time)[channelIdx[chR]]);
+    // fill plots for each array only if both have hits
+    if( !hit_in_array[0] || !hit_in_array[1] ) continue;
 
-        if( iArray == 0) tAvg0 = tAvg;
-        if( iArray == 1)
-        {
-          float delta_tAvg = tAvg0 - tAvg;
-          h1_delta_tAvg_raw[Vov][vth1][vth2] -> Fill( delta_tAvg );
-        }
-      } 
+    for(int iArray = 0; iArray < 2; ++iArray)
+    { 
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
+
+      if( !h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] )
+      {
+        outFile -> cd();
+
+        h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_energyRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,0.5,1.5);
+        h1_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,0.5,1.5);
+
+        fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_energyRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,1000.);
+        fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,20.);
+      }
+
+      h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]] );
+      h1_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chL]]/(*tot)[channelIdx[chR]] );
+
+      tAvg[iArray] = 0.5*((*time)[channelIdx[chL]] + (*time)[channelIdx[chR]]);
     } 
+
+    if(!h1_delta_tAvg_raw[Vov][vth1][vth2])
+    {
+      h1_delta_tAvg_raw[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_raw_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",1000,0.,2000.);
+      fit_delta_tAvg_raw[Vov][vth1][vth2] = new TF1(Form("fit_delta_tAvg_raw_Vov%.1f_vth1_%02d_vth2_%02d", Vov,vth1,vth2),"gaus(0)",0.,2000.);
+    }
+
+    h1_delta_tAvg_raw[Vov][vth1][vth2] -> Fill( tAvg[0] - tAvg[1] );
   }
   std::cout << std::endl;
   
@@ -950,22 +897,6 @@ int main(int argc, char** argv)
       for(auto mapIt3 : mapIt2.second)
       {
         int vth2 = mapIt3.first; 
-	
-        for(int iArray = 0; iArray < 2; ++iArray)
-        { 
-          for(unsigned int iBar = 8; iBar < 9; ++iBar)
-          { 
-            if( !h1_rate_MIPSel[Vov][vth1][vth2][iArray] )
-            {
-	      outFile -> cd();
-
-              h1_rate_MIPSel[Vov][vth1][vth2][iArray] = new TH1F(Form("h1_rate_MIPSel_array%d_Vov%.1f_vth1_%02d_vth2_%02d",iArray,Vov,vth1,vth2),"",num_bars,-0.5,15.5);
-            }
-
-            h1_rate_MIPSel[Vov][vth1][vth2][iArray] -> SetBinContent(iBar+1,eventCounter_LR_MIPSel[Vov][vth1][vth2][iBar+num_bars*iArray]/timeScaled);
-          }
-        }
-        drawH1_arrays(h1_rate_MIPSel[Vov][vth1][vth2][0],h1_rate_MIPSel[Vov][vth1][vth2][1], "iBar", "rate [kHz]", plotDir+"/rate/", false, Form("h1_rate_MIPSel_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2), 0., false);  
 
         drawH1_fitGaus(h1_delta_tAvg_raw[Vov][vth1][vth2], 0., 2000., "delta_{t_{avg}} [ps]", "events", plotDir+"/deltaT/", fit_delta_tAvg_raw[Vov][vth1][vth2]);
       }
@@ -1014,10 +945,15 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
 
-    bool hit_in_upstream_bar = false;
+    std::vector<bool> hit_in_array = {false, false};
+
+    // only look at bar 8 to restrict spatial distribution of hits
+    int iBar = 8;
 
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
+      if( iArray == 1 && !hit_in_array[0] ) continue;
+
       // get array energy for shower rejection
       float energy_array = 0.0;
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
@@ -1038,66 +974,68 @@ int main(int argc, char** argv)
         energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       }
 
-      for(unsigned int iBar = 8; iBar < 9; ++iBar)
-      { 
-        // require hit in upstream bar
-        if ( iArray == 0 && iBar != 8) continue;
-        if ( iArray == 1 && !hit_in_upstream_bar) continue;
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
 
-        int chL = ch_array_side1[iBar];
-        int chR = ch_array_side2[iBar];
-        if( iArray == 1 ) chL += 64;
-        if( iArray == 1 ) chR += 64;
-        
-        if( channelIdx[chL] < 0 ) continue;
-        if( channelIdx[chR] < 0 ) continue;
+      if( channelIdx[chL] < 0 ) continue;
+      if( channelIdx[chR] < 0 ) continue;
 
-        // reject shower events
-        float energy_LR = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-        if( energy_LR < 0.8*energy_array ) continue;
+      // reject shower events
+      if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
+
+      if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
+      if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
+      if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
+      if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
+
+      float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+      TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
+      if( energyMean < 0.80*func->GetParameter(1) ) continue;
+
+      hit_in_array[iArray] = true;
+    }
+
+    // fill plots for each array only if both have hits
+    if( !hit_in_array[0] || !hit_in_array[1] ) continue;
+
+    for(int iArray = 0; iArray < 2; ++iArray)
+    { 
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
+
+      if( !p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] )
+      {
+        outFile -> cd();
+
+        float mean = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(1);
+        float sigma = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2);
+        p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TProfile(Form("p1_deltaT_vs_energyRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",100,mean-3.*sigma,mean+3.*sigma);
+        fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_energyRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"pol3",0.,5.);
+
+        mean = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(1);
+        sigma = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2);
+        p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TProfile(Form("p1_deltaT_vs_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",100,mean-3.*sigma,mean+3.*sigma);
+        fit_totRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_totRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"pol3",0.,5.);
+      }
+
+      float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
+      TF1* func = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
+      if( fabs(energyRatio-func->GetParameter(1)) > 2.*func->GetParameter(2) ) continue;
 	
-        if( !p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] )
-        {
-          outFile -> cd();
-
-          float mean = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(1);
-          float sigma = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2);
-          p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TProfile(Form("p1_deltaT_vs_energyRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",100,mean-3.*sigma,mean+3.*sigma);
-          fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_energyRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"pol3",0.,5.);
-
-          mean = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(1);
-          sigma = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2);
-          p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TProfile(Form("p1_deltaT_vs_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",100,mean-3.*sigma,mean+3.*sigma);
-          fit_totRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_totRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"pol3",0.,5.);
-        }
-        
-        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-        
-        float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-        TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
-        if( energyMean < 0.80*func->GetParameter(1) ) continue;
-        
-        float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
-        func = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
-        if( fabs(energyRatio-func->GetParameter(1)) > 2.*func->GetParameter(2) ) continue;
-	
-        float totRatio = (*tot)[channelIdx[chL]]/(*tot)[channelIdx[chR]];
-        func = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
-        if( fabs(totRatio-func->GetParameter(1)) > 2.*func->GetParameter(2) ) continue;
-        
-        float deltaT = (*time)[channelIdx[chL]] - (*time)[channelIdx[chR]];
-        if( fabs(deltaT) > 2000. ) continue;
-
-        if ( iArray == 0 ) hit_in_upstream_bar = true;
-        
-        p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( energyRatio,deltaT );
-        p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( totRatio,deltaT );
-
-      } 
-    } 
+      float totRatio = (*tot)[channelIdx[chL]]/(*tot)[channelIdx[chR]];
+      func = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
+      if( fabs(totRatio-func->GetParameter(1)) > 2.*func->GetParameter(2) ) continue;
+      
+      float deltaT = (*time)[channelIdx[chL]] - (*time)[channelIdx[chR]];
+      if( fabs(deltaT) > 2000. ) continue;
+      
+      p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( energyRatio,deltaT );
+      p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( totRatio,deltaT );
+    }
   }
   std::cout << std::endl;
 
@@ -1146,10 +1084,15 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
 
-    bool hit_in_upstream_bar = false;
+    std::vector<bool> hit_in_array = {false, false};
+
+    // only look at bar 8 to restrict spatial distribution of hits
+    int iBar = 8;
 
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
+      if( iArray == 1 && !hit_in_array[0] ) continue;
+
       // get array energy for shower rejection
       float energy_array = 0.0;
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
@@ -1169,62 +1112,68 @@ int main(int argc, char** argv)
 
         energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       }
-      for(unsigned int iBar = 8; iBar < 9; ++iBar)
-      { 
-        // require hit in upstream bar
-        if ( iArray == 0 && iBar != 8) continue;
-        if ( iArray == 1 && !hit_in_upstream_bar) continue;
 
-        int chL = ch_array_side1[iBar];
-        int chR = ch_array_side2[iBar];
-        if( iArray == 1 ) chL += 64;
-        if( iArray == 1 ) chR += 64;
-        
-        if( channelIdx[chL] < 0 ) continue;
-        if( channelIdx[chR] < 0 ) continue;
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
 
-        // reject shower events
-        float energy_LR = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-        if( energy_LR < 0.8*energy_array ) continue;
-	
-        if( !h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] )
-        {
-          outFile -> cd();
+      if( channelIdx[chL] < 0 ) continue;
+      if( channelIdx[chR] < 0 ) continue;
+
+      // reject shower events
+      if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
+
+      if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
+      if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
+      if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
+      if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
+
+      float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+      TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
+      if( energyMean < 0.80*func->GetParameter(1) ) continue;
+
+      float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
+      TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
+      if( fabs(energyRatio-func_energyRatio->GetParameter(1)) > 2.*func_energyRatio->GetParameter(2) ) continue;
+
+      hit_in_array[iArray] = true;
+    }
+
+    // fill plots for each array only if both have hits
+    if( !hit_in_array[0] || !hit_in_array[1] ) continue;
+
+    for(int iArray = 0; iArray < 2; ++iArray)
+    { 
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
+
+      if( !h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] )
+      {
+        outFile -> cd();
 	  
-          h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_deltaT_raw_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-5000.,5000.);
-          h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_deltaT_energyRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-5000.,5000.);
-          
-          fit_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_deltaT_raw_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",-5000.,5000.);
-          fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_deltaT_energyRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",-5000.,5000.);
+        h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_deltaT_raw_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-5000.,5000.);
+        h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_deltaT_energyRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-5000.,5000.);
+        
+        fit_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_deltaT_raw_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",-5000.,5000.);
+        fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_deltaT_energyRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",-5000.,5000.);
 	  
-          p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray] = new TProfile(Form("p1_deltaT_energyRatioCorr_vs_t1fine_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",128,-0.5,1023.5);
-        }
-
-        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-        
-        float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-        TF1* func_energy = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
-        if( energyMean < 0.80*func_energy->GetParameter(1) ) continue;
-        
-        float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
-        TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
-        if( fabs(energyRatio-func_energyRatio->GetParameter(1)) > 2.*func_energyRatio->GetParameter(2) ) continue;
-
-        if ( iArray == 0 ) hit_in_upstream_bar = true;
-        
-        TF1* func_energyRatioCorr = fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray];
-        float deltaT = (*time)[channelIdx[chL]] - (*time)[channelIdx[chR]];
-        float deltaT_energyRatioCorr = deltaT - func_energyRatioCorr->Eval(energyRatio) + func_energyRatioCorr->Eval(func_energyRatio->GetParameter(1));
-
-        h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( deltaT );
-        h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( deltaT_energyRatioCorr );
-	
-        if( fabs(deltaT_energyRatioCorr) < 1000 )
-          p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( 0.5*((*t1fine)[channelIdx[chL]]+(*t1fine)[channelIdx[chR]]),deltaT_energyRatioCorr );
+        p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray] = new TProfile(Form("p1_deltaT_energyRatioCorr_vs_t1fine_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",128,-0.5,1023.5);
       }
+
+      float deltaT = (*time)[channelIdx[chL]] - (*time)[channelIdx[chR]];
+      float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
+      TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
+      TF1* func_energyRatioCorr = fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray];
+      float deltaT_energyRatioCorr = deltaT - func_energyRatioCorr->Eval(energyRatio) + func_energyRatioCorr->Eval(func_energyRatio->GetParameter(1));
+
+      h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( deltaT );
+      h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( deltaT_energyRatioCorr );
+	
+      if( fabs(deltaT_energyRatioCorr) < 1000 )
+        p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( 0.5*((*t1fine)[channelIdx[chL]]+(*t1fine)[channelIdx[chR]]),deltaT_energyRatioCorr );
     } 
   }
   std::cout << std::endl;
@@ -1350,10 +1299,15 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
 
-    bool hit_in_upstream_bar = false;
+    std::vector<bool> hit_in_array = {false, false};
+
+    // only look at bar 8 to restrict spatial distribution of hits
+    int iBar = 8;
 
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
+      if( iArray == 1 && !hit_in_array[0] ) continue;
+
       // get array energy for shower rejection
       float energy_array = 0.0;
       for(unsigned int iBar = 0; iBar < num_bars; ++iBar) 
@@ -1373,55 +1327,62 @@ int main(int argc, char** argv)
 
         energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       }
-      for(unsigned int iBar = 8; iBar < 9; ++iBar)
-      { 
-        // require hit in upstream bar
-        if ( iArray == 0 && iBar != 8) continue;
-        if ( iArray == 1 && !hit_in_upstream_bar) continue;
 
-        int chL = ch_array_side1[iBar];
-        int chR = ch_array_side2[iBar];
-        if( iArray == 1 ) chL += 64;
-        if( iArray == 1 ) chR += 64;
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
 
-        if( channelIdx[chL] < 0 ) continue;
-        if( channelIdx[chR] < 0 ) continue;
+      if( channelIdx[chL] < 0 ) continue;
+      if( channelIdx[chR] < 0 ) continue;
 
-        // reject shower events
-        float energy_LR = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-        if( energy_LR < 0.8*energy_array ) continue;
+      // reject shower events
+      if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
 
-        if( !h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] )
-        {
-          outFile -> cd();
+      if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
+      if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
+      if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
+      if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
 
-          h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_deltaT_energyRatioPhaseCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-5000.,5000.);
-          fit_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_deltaT_energyRatioPhaseCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",-5000.,5000.);
-        }
+      float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+      TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
+      if( energyMean < 0.80*func->GetParameter(1) ) continue;
 
-        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
+      float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
+      TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
+      if( fabs(energyRatio-func_energyRatio->GetParameter(1)) > 2.*func_energyRatio->GetParameter(2) ) continue;
 
-        float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-        TF1* func_energy = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
-        if( energyMean < 0.80*func_energy->GetParameter(1) ) continue;
+      hit_in_array[iArray] = true;
+    }
 
-        float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
-        TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
-        if( fabs(energyRatio-func_energyRatio->GetParameter(1)) > 2.*func_energyRatio->GetParameter(2) ) continue;
+    // fill plots for each array only if both have hits
+    if( !hit_in_array[0] || !hit_in_array[1] ) continue;
 
-        if ( iArray == 0 ) hit_in_upstream_bar = true;
+    for(int iArray = 0; iArray < 2; ++iArray)
+    { 
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
 
-        TF1* func_energyRatioCorr = fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray];
-        float deltaT = (*time)[channelIdx[chL]] - (*time)[channelIdx[chR]];
-        float deltaT_energyRatioCorr = deltaT - func_energyRatioCorr->Eval(energyRatio) + func_energyRatioCorr->Eval(func_energyRatio->GetParameter(1));
-	
-        float t1fineAve = 0.5*( (*t1fine)[channelIdx[chL]] + (*t1fine)[channelIdx[chR]] );
-        TProfile* prof = p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray];
-        h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( deltaT_energyRatioCorr - prof->GetBinContent(prof->FindBin(t1fineAve)) );
+      if( !h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] )
+      {
+        outFile -> cd();
+
+        h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_deltaT_energyRatioPhaseCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-5000.,5000.);
+        fit_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_deltaT_energyRatioPhaseCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",-5000.,5000.);
       }
+
+      float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
+      TF1* func_energyRatioCorr = fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray];
+      TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
+      float deltaT = (*time)[channelIdx[chL]] - (*time)[channelIdx[chR]];
+      float deltaT_energyRatioCorr = deltaT - func_energyRatioCorr->Eval(energyRatio) + func_energyRatioCorr->Eval(func_energyRatio->GetParameter(1));
+	
+      float t1fineAve = 0.5*( (*t1fine)[channelIdx[chL]] + (*t1fine)[channelIdx[chR]] );
+      TProfile* prof = p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray];
+      h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( deltaT_energyRatioCorr - prof->GetBinContent(prof->FindBin(t1fineAve)) );
+      
     } 
   }
   std::cout << std::endl;
