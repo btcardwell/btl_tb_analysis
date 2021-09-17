@@ -629,7 +629,8 @@ int main(int argc, char** argv)
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_deltaT_energyRatioCorr;
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_deltaT_energyRatioPhaseCorr;
 
-  std::map<float, std::map<int, std::map<int, TH1F*> > > h1_delta_tFineAvg_raw;
+  std::map<float, std::map<int, std::map<int, TH1F*> > > h1_delta_tAvg_raw;
+  std::map<float, std::map<int, std::map<int, TF1*> > > fit_delta_tAvg_raw;
 
   std::map<float, std::map<int, std::map<int, std::map<int,TProfile*> > > > p1_deltaT_energyRatioCorr_vs_t1fine;
 
@@ -850,6 +851,8 @@ int main(int argc, char** argv)
 
     bool hit_in_upstream_bar = false;
 
+    long long tAvg0 = 0.0; // for delta_tAvg calculation
+
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
       // get array energy for shower rejection
@@ -899,7 +902,12 @@ int main(int argc, char** argv)
           fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_energyRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,1000.);
           fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,20.);
         }
-        
+        if(!h1_delta_tAvg_raw[Vov][vth1][vth2])
+        {
+          h1_delta_tAvg_raw[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_raw_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",1000,0.,2000.);
+          fit_delta_tAvg_raw[Vov][vth1][vth2] = new TF1(Form("fit_delta_tAvg_raw_Vov%.1f_vth1_%02d_vth2_%02d", Vov,vth1,vth2),"gaus(0)",0.,2000.);
+        }
+
         if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
         if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
         if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
@@ -915,6 +923,15 @@ int main(int argc, char** argv)
         
         h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]] );
         h1_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chL]]/(*tot)[channelIdx[chR]] );
+
+        long long tAvg = 0.5*((*time)[channelIdx[chL]] + (*time)[channelIdx[chR]]);
+
+        if( iArray == 0) tAvg0 = tAvg;
+        if( iArray == 1)
+        {
+          float delta_tAvg = tAvg0 - tAvg;
+          h1_delta_tAvg_raw[Vov][vth1][vth2] -> Fill( delta_tAvg );
+        }
       } 
     } 
   }
@@ -949,6 +966,8 @@ int main(int argc, char** argv)
           }
         }
         drawH1_arrays(h1_rate_MIPSel[Vov][vth1][vth2][0],h1_rate_MIPSel[Vov][vth1][vth2][1], "iBar", "rate [kHz]", plotDir+"/rate/", false, Form("h1_rate_MIPSel_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2), 0., false);  
+
+        drawH1_fitGaus(h1_delta_tAvg_raw[Vov][vth1][vth2], 0., 2000., "delta_{t_{avg}} [ps]", "events", plotDir+"/deltaT/", fit_delta_tAvg_raw[Vov][vth1][vth2]);
       }
     }
   }
@@ -996,11 +1015,6 @@ int main(int argc, char** argv)
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
 
     bool hit_in_upstream_bar = false;
-
-    if( !h1_delta_tFineAvg_raw[Vov][vth1][vth2] )
-        h1_delta_tFineAvg_raw[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_raw_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",500,-500.,500.);
-
-    float tFineAvg0 = 0.0; // for delta_tAvg calculation
 
     for(int iArray = 0; iArray < 2; ++iArray)
     { 
@@ -1082,26 +1096,6 @@ int main(int argc, char** argv)
         p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( energyRatio,deltaT );
         p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( totRatio,deltaT );
 
-        float tAvg = 0.5*((*time)[channelIdx[chL]] + (*time)[channelIdx[chR]]);
-        float tFineAvg = 0.5*((*t1fine)[channelIdx[chL]] + (*t1fine)[channelIdx[chR]]);
-
-        //if( entry%1000 == 0 )
-        //{
-        //  std::cout << std::fixed << "array: " << iArray << ", tAvg: " << tAvg << ", tFineAvg: " << tFineAvg << std::endl;
-        //}
-
-        if( iArray == 0) tFineAvg0 = tFineAvg;
-        if( iArray == 1)
-        {
-          float delta_tFineAvg = tFineAvg - tFineAvg0;
-          h1_delta_tFineAvg_raw[Vov][vth1][vth2] -> Fill( 1e38 * delta_tFineAvg );
-          if( entry%1000 == 0 )
-          {
-            std::cout << "t1: " << tFineAvg << ", t0: " << tFineAvg0 << ", deltaT: " << delta_tFineAvg << std::endl;
-          }
-        }
-
-
       } 
     } 
   }
@@ -1130,7 +1124,6 @@ int main(int argc, char** argv)
 
           }
         }
-        drawH1(h1_delta_tFineAvg_raw[Vov][vth1][vth2], "t_{avg} [ps]", "events", plotDir+"/deltaT/");
       }
     }
   }
@@ -1464,13 +1457,15 @@ int main(int argc, char** argv)
               g_tRes_energyRatioPhaseCorr[Vov][vth1][vth2][iArray] -> SetName(Form("g_tRes_energyRatioPhaseCorr_array%d_Vov%.1f_vth1_%02d_vth2_%02d",iArray,Vov,vth1,vth2));
             }
             g_tRes_energyRatioPhaseCorr[Vov][vth1][vth2][iArray] -> SetPoint(g_tRes_energyRatioPhaseCorr[Vov][vth1][vth2][iArray]->GetN(),iBar,fit_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2));
-	    
             if( g_tRes_energyRatioPhaseCorr_vs_vth1[Vov][vth2][iBar][iArray] == NULL )
             {
               g_tRes_energyRatioPhaseCorr_vs_vth1[Vov][vth2][iBar][iArray] = new TGraphErrors();
               g_tRes_energyRatioPhaseCorr_vs_vth1[Vov][vth2][iBar][iArray] -> SetName(Form("g_tRes_energyRatioPhaseCorr_vs_vth1_bar%02d_array%d_Vov%.1f_vth2_%02d",iBar,iArray,Vov,vth2));
             }
-            g_tRes_energyRatioPhaseCorr_vs_vth1[Vov][vth2][iBar][iArray] -> SetPoint(g_tRes_energyRatioPhaseCorr_vs_vth1[Vov][vth2][iBar][iArray]->GetN(),vth1,fit_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2));
+            float tDiff_sigma = fit_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2);
+            float delta_tAvg_raw_sigma = fit_delta_tAvg_raw[Vov][vth1][vth2]->GetParameter(2);
+            g_tRes_energyRatioPhaseCorr_vs_vth1[Vov][vth2][iBar][iArray] -> SetPoint(g_tRes_energyRatioPhaseCorr_vs_vth1[Vov][vth2][iBar][iArray]->GetN(),vth1,tDiff_sigma);
+            std::cout << "vth1: " << vth1 << ", tDiff sigma: " << tDiff_sigma << ", delta_tAvg_raw_sigma: " << delta_tAvg_raw_sigma << std::endl;
           }
         }
       }
