@@ -334,15 +334,6 @@ void drawH1_energy(TH1F* h_LR, TH1F* h_L, TH1F* h_R,
   h_L -> Draw("same");
   h_R -> Draw("same");
 
-  // int nPeaks = 5;
-  // TSpectrum* spectrum = new TSpectrum(nPeaks);
-  // int nFound = spectrum -> Search(h_LR, 5.0, "nodraw", 0.1);
-  // double* peaks = spectrum -> GetPositionX();
-
-  // float xMax = 0.;
-  // for(int jj = 0; jj < nFound; ++jj)
-  //   if( peaks[jj] > xMax) xMax = peaks[jj];
-
   float xMax = 0.;
   float max = 0;
   for(int bin = 1; bin <= h_LR->GetNbinsX(); ++bin)
@@ -356,12 +347,6 @@ void drawH1_energy(TH1F* h_LR, TH1F* h_L, TH1F* h_R,
 	  xMax = binCenter;
 	}
   }
-
-  // f_gaus -> SetRange(xMax-0.12*xMax,xMax+0.12*xMax);
-  // h_LR -> Fit(f_gaus,"QNRS+");
-  // f_gaus -> SetLineColor(kBlack);
-  // f_gaus -> SetLineWidth(3);
-  // f_gaus -> Draw("same");
 
   TF1* f_landau = new TF1("f_landau","[0]*TMath::Landau(x,[1],[2])",0.8*xMax,1000.);
   f_landau -> SetParameters(100.,xMax,10.);
@@ -560,13 +545,22 @@ int main(int argc, char** argv)
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_energy_L;
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_energy_R;
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_energy_LR;
-
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_energy_LR;
-  std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_tot_LR;
+
+  std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_energy_L_noShowerRejection;
+  std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_energy_R_noShowerRejection;
+  std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_energy_LR_noShowerRejection;
+  std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_energy_LR_noShowerRejection;
 
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_tot_L;
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_tot_R;
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_tot_LR;
+  std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_tot_LR;
+
+  std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_tot_L_noShowerRejection;
+  std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_tot_R_noShowerRejection;
+  std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_tot_LR_noShowerRejection;
+  std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_tot_LR_noShowerRejection;
 
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_energyRatio;
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_totRatio;
@@ -606,6 +600,7 @@ int main(int argc, char** argv)
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
 
     std::vector<bool> hit_in_array = {false, false};
+    std::vector<bool> hit_in_array_noShowerRejection = {false, false};
 
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
@@ -642,20 +637,54 @@ int main(int argc, char** argv)
       if( channelIdx[chL] < 0 ) continue;
       if( channelIdx[chR] < 0 ) continue;
 
-      // reject shower events
-      if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
-
       if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
       if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
       if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
       if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
 
+      hit_in_array_noShowerRejection[iArray] = true;
+
+      // reject shower events
+      if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
+
       hit_in_array[iArray] = true;
     }
 
-    // fill plots for each array only if both have hits
-    if( !hit_in_array[0] || !hit_in_array[1] ) continue;
+    // fill noShowerRejection plots for each array only if both have hits
+    if( !hit_in_array_noShowerRejection[0] || !hit_in_array_noShowerRejection[1] ) continue;
+    for(int iArray = 0; iArray < 2; ++iArray)
+    {
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
 
+      if( !h1_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray] )
+      {
+        outFile -> cd();
+
+        h1_energy_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_energy_L_noShowerRejection_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",200,-0.5,999.5);
+        h1_energy_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_energy_R_noShowerRejection_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",200,-0.5,999.5);
+        h1_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_energy_LR_noShowerRejection_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",200,-0.5,999.5);
+        fit_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_energy_noShowerRejection_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),langaufun,0.,1000.,4);
+
+        h1_tot_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_tot_L_noShowerRejection_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",100,0.,20.);
+        h1_tot_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_tot_R_noShowerRejection_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",100,0.,20.);
+        h1_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_tot_LR_noShowerRejection_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",100,0.,20.);
+        fit_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_tot_noShowerRejection_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,20.);
+      }
+
+      h1_energy_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chL]] );
+      h1_energy_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chR]] );
+      h1_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) );
+
+      h1_tot_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chL]]/1000. );
+      h1_tot_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chR]]/1000. );
+      h1_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( 0.5*((*tot)[channelIdx[chL]]+(*tot)[channelIdx[chR]])/1000. );
+    }
+
+    // fill noShowerRejection plots for each array only if both have hits
+    if( !hit_in_array[0] || !hit_in_array[1] ) continue;
     for(int iArray = 0; iArray < 2; ++iArray)
     {
       int chL = ch_array_side1[iBar];
@@ -667,9 +696,9 @@ int main(int argc, char** argv)
       {
         outFile -> cd();
 
-        h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_energy_L_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",500,-0.5,999.5);
-        h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_energy_R_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",500,-0.5,999.5);
-        h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_energy_LR_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,-0.5,999.5);
+        h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_energy_L_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",200,-0.5,999.5);
+        h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_energy_R_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",200,-0.5,999.5);
+        h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_energy_LR_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",200,-0.5,999.5);
 
         h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_tot_L_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",100,0.,20.);
         h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray]  = new TH1F(Form("h1_tot_R_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"",100,0.,20.);
@@ -708,10 +737,11 @@ int main(int argc, char** argv)
         {
           for(unsigned int iBar = 8; iBar < 9; ++iBar)
           {
-            drawH1_energy(h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray],
-                          0., 1000, "energy [ADC]", "events", plotDir+"/energy/", fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
-            drawH1_energy(h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray],
-                          0., 1000, "ToT [ns]", "events", plotDir+"/tot/", fit_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawH1_energy(h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "energy [ADC]", "events", plotDir+"/energy/", fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawH1_energy(h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "ToT [ns]", "events", plotDir+"/tot/", fit_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
+
+            drawH1_energy(h1_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "energy [ADC]", "events", plotDir+"/energy/", fit_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawH1_energy(h1_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "ToT [ns]", "events", plotDir+"/tot/", fit_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]);
 
             if( fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] == NULL ) continue;
 
