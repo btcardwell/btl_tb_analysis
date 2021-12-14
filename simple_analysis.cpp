@@ -883,7 +883,7 @@ int main(int argc, char** argv)
 
     if(!h1_delta_tAvg_raw[Vov][vth1][vth2])
     {
-      h1_delta_tAvg_raw[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_raw_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",200,-2000.,0.);
+      h1_delta_tAvg_raw[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_raw_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",100,-2000.,0.);
       fit_delta_tAvg_raw[Vov][vth1][vth2] = new TF1(Form("fit_delta_tAvg_raw_Vov%.1f_vth1_%02d_vth2_%02d", Vov,vth1,vth2),"gaus(0)",-2000.,0);
     }
 
@@ -1209,10 +1209,10 @@ int main(int argc, char** argv)
 
     if(!h1_delta_tAvg[Vov][vth1][vth2])
     {
-      h1_delta_tAvg[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",200,-1000.,1000.);
+      h1_delta_tAvg[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",100,-1000.,1000.);
       fit_delta_tAvg[Vov][vth1][vth2] = new TF1(Form("fit_delta_tAvg_Vov%.1f_vth1_%02d_vth2_%02d", Vov,vth1,vth2),"gaus(0)",-1000.,1000.);
 
-      h1_delta_tAvg_energyCorr[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_energyCorr_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",200,-1000.,1000.);
+      h1_delta_tAvg_energyCorr[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_energyCorr_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",100,-1000.,1000.);
       fit_delta_tAvg_energyCorr[Vov][vth1][vth2] = new TF1(Form("fit_delta_tAvg_energyCorr_Vov%.1f_vth1_%02d_vth2_%02d", Vov,vth1,vth2),"gaus(0)",-1000.,1000.);
 
       p1_delta_tAvgEnergyCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*0] = new TProfile(Form("p1_delta_tAvgEnergyCorr_vs_t1fine_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",0,iBar,Vov,vth1,vth2),"",128,-0.5,1023.5);
