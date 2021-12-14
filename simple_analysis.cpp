@@ -855,7 +855,7 @@ int main(int argc, char** argv)
     
     // for delta_tAvg calculation
     // perhaps I should do something to ensure that these default values are never used
-    std::vector<long long> tAvg = {0, 0};
+    std::vector<long double> tAvg = {0, 0};
 
     for(int iArray = 0; iArray < 2; ++iArray)
     {
@@ -1003,7 +1003,7 @@ int main(int argc, char** argv)
 
     // for delta_tAvg calculation
     // perhaps I should do something to ensure that these default values are never used
-    std::vector<long long> tAvg = {0, 0};
+    std::vector<long double> tAvg = {0, 0};
     std::vector<float> energyMean = {0., 0.};
 
     for(int iArray = 0; iArray < 2; ++iArray)
@@ -1164,8 +1164,8 @@ int main(int argc, char** argv)
     // fill plots for each array only if both have hits
     if( !hit_in_array[0] || !hit_in_array[1] ) continue;
 
-    std::vector<long long> tAvg = {0, 0};
-    std::vector<long long> tAvgCorr = {0, 0};
+    std::vector<long double> tAvg = {0, 0};
+    std::vector<long double> tAvgCorr = {0, 0};
     std::vector<float> tFine = {0., 0.};
 
     for(int iArray = 0; iArray < 2; ++iArray)
@@ -1411,9 +1411,9 @@ int main(int argc, char** argv)
     if( !hit_in_array[0] || !hit_in_array[1] ) continue;
 
     std::vector<float> tFine = {0., 0.};
-    std::vector<long long> tAvg = {0, 0};
-    std::vector<long long> tAvgCorr = {0, 0};
-    std::vector<long long> tAvgPhaseCorr = {0, 0};
+    std::vector<long double> tAvg = {0, 0};
+    std::vector<long double> tAvgCorr = {0, 0};
+    std::vector<long double> tAvgPhaseCorr = {0, 0};
 
     for(int iArray = 0; iArray < 2; ++iArray)
     {
