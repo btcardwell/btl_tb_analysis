@@ -486,7 +486,7 @@ int main(int argc, char** argv)
   std::vector<float>* energy = 0;
   std::vector<long long>* time = 0;
   std::vector<float>* qT1 = 0;
-  std::vector<float>* t1fine = 0;
+  std::vector<unsigned short>* t1fine = 0;
   data -> SetBranchStatus("*",0);
   data -> SetBranchStatus("step1",     1); data -> SetBranchAddress("step1",    &step1);
   data -> SetBranchStatus("step2",     1); data -> SetBranchAddress("step2",    &step2);
