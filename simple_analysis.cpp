@@ -501,15 +501,13 @@ int main(int argc, char** argv)
   std::string plotDir(Form("plots/",runListStr.c_str()));
   system(Form("mkdir -p %s",plotDir.c_str()));
   system(Form("mkdir -p %s/energy/",plotDir.c_str()));
-  system(Form("mkdir -p %s/energyRatio/",plotDir.c_str()));
   system(Form("mkdir -p %s/tot/",plotDir.c_str()));
-  system(Form("mkdir -p %s/totRatio/",plotDir.c_str()));
   system(Form("mkdir -p %s/energyRatioCorr/",plotDir.c_str()));
-  system(Form("mkdir -p %s/totRatioCorr/",plotDir.c_str()));
+  // system(Form("mkdir -p %s/totRatioCorr/",plotDir.c_str()));
+  system(Form("mkdir -p %s/phaseCorr/",plotDir.c_str()));
   system(Form("mkdir -p %s/deltaT/",plotDir.c_str()));
+  system(Form("mkdir -p %s/delta_tAvg/",plotDir.c_str()));
   system(Form("mkdir -p %s/timeResolution/",plotDir.c_str()));
-  system(Form("mkdir -p %s/deltaT_phaseCorr/",plotDir.c_str()));
-  system(Form("mkdir -p %s/timeResolution_phaseCorr/",plotDir.c_str()));
 
   // define colors
   std::vector<int> colors;
@@ -563,15 +561,15 @@ int main(int argc, char** argv)
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_tot_LR_noShowerRejection;
 
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_energyRatio;
-  std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_totRatio;
+  // std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_totRatio;
 
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_energyRatio;
-  std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_totRatio;
+  // std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_totRatio;
 
   std::map<float, std::map<int, std::map<int, std::map<int,TProfile*> > > > p1_deltaT_vs_energyRatio;
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_energyRatioCorr;
-  std::map<float, std::map<int, std::map<int, std::map<int,TProfile*> > > > p1_deltaT_vs_totRatio;
-  std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_totRatioCorr;
+  // std::map<float, std::map<int, std::map<int, std::map<int,TProfile*> > > > p1_deltaT_vs_totRatio;
+  // std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_totRatioCorr;
 
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_deltaT_raw;
   std::map<float, std::map<int, std::map<int, std::map<int,TH1F*> > > > h1_deltaT_energyRatioCorr;
@@ -580,6 +578,7 @@ int main(int argc, char** argv)
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_deltaT_energyRatioCorr;
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_deltaT_energyRatioPhaseCorr;
 
+  // why not fit this one?
   std::map<float, std::map<int, std::map<int, std::map<int,TProfile*> > > > p1_deltaT_energyRatioCorr_vs_t1fine;
 
   std::map<float, std::map<int, std::map<int, TH1F*> > > h1_delta_tAvg_raw;
@@ -748,11 +747,11 @@ int main(int argc, char** argv)
         {
           for(unsigned int iBar = 8; iBar < 9; ++iBar)
           {
-            drawH1_energy(h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "energy [ADC]", "events", plotDir+"/energy/", fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
-            drawH1_energy(h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "ToT [ns]", "events", plotDir+"/tot/", fit_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawH1_energy(h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "energy [ADC]", "events", plotDir+"energy", fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawH1_energy(h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "ToT [ns]", "events", plotDir+"tot", fit_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
 
-            drawH1_energy(h1_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "energy [ADC]", "events", plotDir+"/energy/", fit_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]);
-            drawH1_energy(h1_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "ToT [ns]", "events", plotDir+"/tot/", fit_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawH1_energy(h1_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "energy [ADC]", "events", plotDir+"energy", fit_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawH1_energy(h1_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "ToT [ns]", "events", plotDir+"tot", fit_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]);
 
             if( fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] == NULL ) continue;
 
@@ -779,7 +778,7 @@ int main(int argc, char** argv)
       {
         int vth2 = mapIt3.first;
 
-        drawG_arrays(g_energyPeak[Vov][vth1][vth2][0],g_energyPeak[Vov][vth1][vth2][1], "iBar", "MIP peak [ADC]", 0., 800., plotDir+"/energy/",false,Form("g_energyPeak_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2));
+        drawG_arrays(g_energyPeak[Vov][vth1][vth2][0],g_energyPeak[Vov][vth1][vth2][1], "iBar", "MIP peak [ADC]", 0., 800., plotDir+"energy",false,Form("g_energyPeak_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2));
       }
     }
   }
@@ -869,14 +868,14 @@ int main(int argc, char** argv)
         outFile -> cd();
 
         h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_energyRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,0.5,1.5);
-        h1_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,0.5,1.5);
+        // h1_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TH1F(Form("h1_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",500,0.5,1.5);
 
         fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_energyRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,1000.);
-        fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,20.);
+        // fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"gaus(0)",0.,20.);
       }
 
       h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]] );
-      h1_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chL]]/(*tot)[channelIdx[chR]] );
+      // h1_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( (*tot)[channelIdx[chL]]/(*tot)[channelIdx[chR]] );
 
       tAvg[iArray] = 0.5*((*time)[channelIdx[chL]] + (*time)[channelIdx[chR]]);
     }
@@ -903,7 +902,7 @@ int main(int argc, char** argv)
       {
         int vth2 = mapIt3.first;
 
-        drawH1_fitGaus(h1_delta_tAvg_raw[Vov][vth1][vth2], -2000., 0., "#Delta_{t_{avg}} [ps]", "events", plotDir+"/deltaT/", fit_delta_tAvg_raw[Vov][vth1][vth2]);
+        drawH1_fitGaus(h1_delta_tAvg_raw[Vov][vth1][vth2], -2000., 0., "#Delta_{t_{avg}} [ps]", "events", plotDir+"delta_tAvg", fit_delta_tAvg_raw[Vov][vth1][vth2]);
       }
     }
   }
@@ -923,9 +922,9 @@ int main(int argc, char** argv)
         {
           for(unsigned int iBar = 8; iBar < 9; ++iBar)
           {
-            drawH1_fitGaus(h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 3., "energy ratio", "events", plotDir+"/energyRatio/", fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], false);
+            drawH1_fitGaus(h1_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 3., "energy ratio", "events", plotDir+"energyRatioCorr", fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], false);
 
-            drawH1_fitGaus(h1_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 3., "ToT ratio", "events", plotDir+"/totRatio/", fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray], false);
+            // drawH1_fitGaus(h1_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 3., "ToT ratio", "events", plotDir+"totRatioCorr", fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray], false);
           }
         }
       }
@@ -1022,25 +1021,25 @@ int main(int argc, char** argv)
         p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TProfile(Form("p1_deltaT_vs_energyRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",100,mean-3.*sigma,mean+3.*sigma);
         fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_energyRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"pol3",0.,5.);
 
-        mean = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(1);
-        sigma = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2);
-        p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TProfile(Form("p1_deltaT_vs_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",100,mean-3.*sigma,mean+3.*sigma);
-        fit_totRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_totRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"pol3",0.,5.);
+        // mean = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(1);
+        // sigma = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2);
+        // p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] = new TProfile(Form("p1_deltaT_vs_totRatio_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",iArray,iBar,Vov,vth1,vth2),"",100,mean-3.*sigma,mean+3.*sigma);
+        // fit_totRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] = new TF1(Form("fit_totRatioCorr_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d", iArray,iBar,Vov,vth1,vth2),"pol3",0.,5.);
       }
 
       float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
       TF1* func = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
       // if( fabs(energyRatio-func->GetParameter(1)) > 2.*func->GetParameter(2) ) continue;
 
-      float totRatio = (*tot)[channelIdx[chL]]/(*tot)[channelIdx[chR]];
-      func = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
+      // float totRatio = (*tot)[channelIdx[chL]]/(*tot)[channelIdx[chR]];
+      // func = fit_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
       // if( fabs(totRatio-func->GetParameter(1)) > 2.*func->GetParameter(2) ) continue;
 
       float deltaT = (*time)[channelIdx[chL]] - (*time)[channelIdx[chR]];
       // if( fabs(deltaT) > 2000. ) continue;
 
       p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( energyRatio,deltaT );
-      p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( totRatio,deltaT );
+      // p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( totRatio,deltaT );
 
       energyMean[iArray] = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       tAvg[iArray] = 0.5*((*time)[channelIdx[chL]] + (*time)[channelIdx[chR]]);
@@ -1080,11 +1079,10 @@ int main(int argc, char** argv)
         {
           for(unsigned int iBar = 8; iBar < 9; ++iBar)
           {
-            drawP1_fitPol(p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "energy ratio", "#DeltaT [ps]", plotDir+"/energyRatioCorr/", fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
-            drawP1_fitPol(p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "ToT ratio", "#DeltaT [ps]", plotDir+"/totRatioCorr/", fit_totRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawP1_fitPol(p1_deltaT_vs_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "energy ratio", "#DeltaT [ps]", plotDir+"energyRatioCorr", fit_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawP1_fitPol(p1_delta_tAvg_vs_energy[Vov][vth1][vth2][iBar+num_bars*iArray], "Energy [ADC]", "#Delta_{t_{avg}} [ps]", plotDir+"energyRatioCorr", fit_tAvgEnergyCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
 
-            drawP1_fitPol(p1_delta_tAvg_vs_energy[Vov][vth1][vth2][iBar+num_bars*iArray], "Energy [ADC]", "#Delta_{t_{avg}} [ps]", plotDir+"/deltaT/", fit_tAvgEnergyCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
-
+            // drawP1_fitPol(p1_deltaT_vs_totRatio[Vov][vth1][vth2][iBar+num_bars*iArray], "ToT ratio", "#DeltaT [ps]", plotDir+"totRatioCorr", fit_totRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
           }
         }
       }
@@ -1248,91 +1246,20 @@ int main(int argc, char** argv)
       {
         int vth2 = mapIt3.first;
 
-        drawH1_fitGaus(h1_delta_tAvg[Vov][vth1][vth2], -1000., 1000., "#Delta_{t_{avg}} [ps]", "events", plotDir+"/deltaT/", fit_delta_tAvg[Vov][vth1][vth2]);
+        drawH1_fitGaus(h1_delta_tAvg[Vov][vth1][vth2], -1000., 1000., "#Delta_{t_{avg}} [ps]", "events", plotDir+"delta_tAvg", fit_delta_tAvg[Vov][vth1][vth2]);
 
-        drawH1_fitGaus(h1_delta_tAvg_energyCorr[Vov][vth1][vth2], -1000., 1000., "#Delta_{t_{avg}} [ps]", "events", plotDir+"/deltaT/", fit_delta_tAvg_energyCorr[Vov][vth1][vth2]);
+        drawH1_fitGaus(h1_delta_tAvg_energyCorr[Vov][vth1][vth2], -1000., 1000., "#Delta_{t_{avg}} [ps]", "events", plotDir+"delta_tAvg", fit_delta_tAvg_energyCorr[Vov][vth1][vth2]);
 
         for(int iArray = 0; iArray < 2; ++iArray)
         {
           for(unsigned int iBar = 8; iBar < 9; ++iBar)
           {
-            drawH1_deltaT(h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray], "#Deltat [ps]", "events", plotDir+"/deltaT/",fit_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawH1_deltaT(h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray], "#Deltat [ps]", "events", plotDir+"deltaT",fit_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
 
-            drawP1(p1_delta_tAvgEnergyCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray], "t1fine", "#Delta_{t_{avg}} [ps]", plotDir+"/deltaT/");
-
-            if( fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] == NULL ) continue;
-
-            if( !g_tRes_energyRatioCorr[Vov][vth1][vth2][iArray] )
-            {
-              g_tRes_energyRatioCorr[Vov][vth1][vth2][iArray] = new TGraphErrors();
-              g_tRes_energyRatioCorr[Vov][vth1][vth2][iArray] -> SetName(Form("g_tRes_energyRatioCorr_array%d_Vov%.1f_vth1_%02d_vth2_%02d",iArray,Vov,vth1,vth2));
-            }
-            g_tRes_energyRatioCorr[Vov][vth1][vth2][iArray] -> SetPoint(g_tRes_energyRatioCorr[Vov][vth1][vth2][iArray]->GetN(),iBar,fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2));
-
-            if( g_tRes_energyRatioCorr_vs_vth1[Vov][vth2][iBar][iArray] == NULL )
-            {
-              g_tRes_energyRatioCorr_vs_vth1[Vov][vth2][iBar][iArray] = new TGraphErrors();
-              g_tRes_energyRatioCorr_vs_vth1[Vov][vth2][iBar][iArray] -> SetName(Form("g_tRes_energyRatioCorr_vs_vth1_bar%02d_array%d_Vov%.1f_vth2_%02d",iBar,iArray,Vov,vth2));
-            }
-            g_tRes_energyRatioCorr_vs_vth1[Vov][vth2][iBar][iArray] -> SetPoint(g_tRes_energyRatioCorr_vs_vth1[Vov][vth2][iBar][iArray]->GetN(),vth1,fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2));
+            drawP1(p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray], "t1fine", "#Deltat [ps]", plotDir+"phaseCorr");
+            drawP1(p1_delta_tAvgEnergyCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray], "t1fine", "#Delta_{t_{avg}} [ps]", plotDir+"phaseCorr");
           }
         }
-      }
-    }
-  }
-
-  // time resolution vs. bar
-  for(auto mapIt : h1_deltaT_energyRatioCorr )
-    {
-    float Vov = mapIt.first;
-    for(auto mapIt2 : mapIt.second)
-    {
-      int vth1 = mapIt2.first;
-      if( vth1 != vth1Ref ) continue;
-
-      for(auto mapIt3 : mapIt2.second)
-      {
-        int vth2 = mapIt3.first;
-
-        drawG_arrays(g_tRes_energyRatioCorr[Vov][vth1][vth2][0],g_tRes_energyRatioCorr[Vov][vth1][vth2][1], "iBar", "#sigma_{t} [ps]", 0., 300., plotDir+"/timeResolution/",false,Form("g_tRes_energyRatioCorr_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2));
-      }
-    }
-  }
-
-  std::map<int, std::map<int, std::map<int, std::vector<TGraphErrors*> > > > g_tRes_energyRatioCorr_vs_vth1_vec;
-  std::map<int, std::map<int, std::map<int, std::vector<std::string> > > > g_tRes_energyRatioCorr_vs_vth1_labels;
-  for(auto mapIt : g_tRes_energyRatioCorr_vs_vth1 )
-  {
-    float Vov = mapIt.first;
-    for(auto mapIt2 : mapIt.second)
-    {
-      int vth2 = mapIt2.first;
-
-      for(auto mapIt3 : mapIt2.second)
-      {
-        int iBar = mapIt3.first;
-
-	for(auto mapIt4 : mapIt3.second)
-	{
-	  int iArray = mapIt4.first;
-	  g_tRes_energyRatioCorr_vs_vth1_vec[vth2][iBar][iArray].push_back(g_tRes_energyRatioCorr_vs_vth1[Vov][vth2][iBar][iArray]);
-	  g_tRes_energyRatioCorr_vs_vth1_labels[vth2][iBar][iArray].push_back(Form("V_{OV} = %.1f V",Vov));
-	}
-      }
-    }
-  }
-  for(auto mapIt : g_tRes_energyRatioCorr_vs_vth1_vec)
-  {
-    int vth2 = mapIt.first;
-
-    for(auto mapIt2 : mapIt.second)
-    {
-      int iBar = mapIt2.first;
-
-      for(auto mapIt3 : mapIt2.second)
-      {
-        int iArray = mapIt3.first;
-        drawG_vector(g_tRes_energyRatioCorr_vs_vth1_vec[vth2][iBar][iArray], "vth_{1} [DAC]", "#sigma_{t} [ps]", 0., 300., plotDir+"/timeResolution/",false,Form("g_tRes_energyRatioCorr_vs_vth1_vth2_%02d_bar%02d_array%d",vth2,iBar,iArray),&g_tRes_energyRatioCorr_vs_vth1_labels[vth2][iBar][iArray]);
       }
     }
   }
@@ -1482,7 +1409,7 @@ int main(int argc, char** argv)
         for(unsigned int iBar = 8; iBar < 9; ++iBar)
         {
 
-          drawH1_fitGaus(h1_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2], -1000., 1000., "#Delta_{t_{avg}} [ps]", "events", plotDir+"/deltaT/", fit_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2]);
+          drawH1_fitGaus(h1_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2], -1000., 1000., "#Delta_{t_{avg}} [ps]", "events", plotDir+"delta_tAvg", fit_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2]);
 
           if( g_tAvgRes_energyAndPhaseCorr_vs_vth1[Vov][vth2][iBar] == NULL )
           {
@@ -1494,7 +1421,7 @@ int main(int argc, char** argv)
 
           for(int iArray = 0; iArray < 2; ++iArray)
           {
-            drawH1_deltaT(h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray],h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray], "#Deltat [ps]", "events", plotDir+"/deltaT_phaseCorr/",fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray],fit_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawH1_deltaT(h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray],h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray], "#Deltat [ps]", "events", plotDir+"deltaT",fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray],fit_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
 
             if( fit_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] == NULL ) continue;
 
@@ -1532,7 +1459,7 @@ int main(int argc, char** argv)
       {
         int vth2 = mapIt3.first;
 
-        drawG_arrays(g_tRes_energyRatioPhaseCorr[Vov][vth1][vth2][0],g_tRes_energyRatioPhaseCorr[Vov][vth1][vth2][1], "iBar", "#sigma_{t} [ps]", 0., 300., plotDir+"/timeResolution_phaseCorr/",false,Form("g_tRes_energyRatioPhaseCorr_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2));
+        drawG_arrays(g_tRes_energyRatioPhaseCorr[Vov][vth1][vth2][0],g_tRes_energyRatioPhaseCorr[Vov][vth1][vth2][1], "iBar", "#sigma_{t} [ps]", 0., 300., plotDir+"timeResolution",false,Form("g_tRes_energyRatioPhaseCorr_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2));
       }
     }
   }
@@ -1573,12 +1500,12 @@ int main(int argc, char** argv)
     {
       int iBar = mapIt2.first;
 
-      drawG_vector(g_tAvgRes_energyAndPhaseCorr_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "#sigma_{#Delta_{t_{avg}}} [ps]", 0., 300., plotDir+"/timeResolution_phaseCorr/",false,Form("g_tAvgRes_energyAndPhaseCorr_vs_vth1_vth2_%02d_bar%02d",vth2,iBar),&g_tAvgRes_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar]);
+      drawG_vector(g_tAvgRes_energyAndPhaseCorr_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "#sigma_{#Delta_{t_{avg}}} [ps]", 0., 300., plotDir+"timeResolution",false,Form("g_tAvgRes_energyAndPhaseCorr_vs_vth1_vth2_%02d_bar%02d",vth2,iBar),&g_tAvgRes_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar]);
 
       for(auto mapIt3 : mapIt2.second)
       {
         int iArray = mapIt3.first;
-        drawG_vector(g_tRes_energyRatioPhaseCorr_vs_vth1_vec[vth2][iBar][iArray], "vth_{1} [DAC]", "#sigma_{t_{diff}} [ps]", 0., 300., plotDir+"/timeResolution_phaseCorr/",false,Form("g_tRes_energyRatioPhaseCorr_vs_vth1_vth2_%02d_bar%02d_array%d",vth2,iBar,iArray),&g_tRes_energyRatioPhaseCorr_vs_vth1_labels[vth2][iBar][iArray]);
+        drawG_vector(g_tRes_energyRatioPhaseCorr_vs_vth1_vec[vth2][iBar][iArray], "vth_{1} [DAC]", "#sigma_{t_{diff}} [ps]", 0., 300., plotDir+"timeResolution",false,Form("g_tRes_energyRatioPhaseCorr_vs_vth1_vth2_%02d_bar%02d_array%d",vth2,iBar,iArray),&g_tRes_energyRatioPhaseCorr_vs_vth1_labels[vth2][iBar][iArray]);
       }
     }
   }
