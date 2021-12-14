@@ -588,9 +588,12 @@ int main(int argc, char** argv)
   std::map<float, std::map<int, std::map<int, TF1*> > > fit_delta_tAvg;
   std::map<float, std::map<int, std::map<int, TH1F*> > > h1_delta_tAvg_energyCorr;
   std::map<float, std::map<int, std::map<int, TF1*> > > fit_delta_tAvg_energyCorr;
+  std::map<float, std::map<int, std::map<int, TH1F*> > > h1_delta_tAvg_energyAndPhaseCorr;
+  std::map<float, std::map<int, std::map<int, TF1*> > > fit_delta_tAvg_energyAndPhaseCorr;
 
   std::map<float, std::map<int, std::map<int, std::map<int,TProfile*> > > > p1_delta_tAvg_vs_energy;
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_tAvgEnergyCorr;
+  std::map<float, std::map<int, std::map<int, std::map<int,TProfile*> > > > p1_delta_tAvgEnergyCorr_vs_t1fine;
 
 
   // 1st loop over events: get energy and tot
@@ -1163,6 +1166,7 @@ int main(int argc, char** argv)
 
     std::vector<long long> tAvg = {0, 0};
     std::vector<long long> tAvgCorr = {0, 0};
+    std::vector<float> tFine = {0., 0.};
 
     for(int iArray = 0; iArray < 2; ++iArray)
     {
@@ -1193,8 +1197,9 @@ int main(int argc, char** argv)
       h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( deltaT );
       h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( deltaT_energyRatioCorr );
 
+      tFine[iArray] =  0.5*((*t1fine)[channelIdx[chL]]+(*t1fine)[channelIdx[chR]]);
       if( fabs(deltaT_energyRatioCorr) < 1000 )
-        p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( 0.5*((*t1fine)[channelIdx[chL]]+(*t1fine)[channelIdx[chR]]),deltaT_energyRatioCorr );
+        p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( tFine[iArray],deltaT_energyRatioCorr );
 
       float energyMean = 0.5*((*energy)[channelIdx[chL]] + (*energy)[channelIdx[chR]]);
       TF1* func_tAvgEnergyCorr = fit_tAvgEnergyCorr[Vov][vth1][vth2][iBar+num_bars*iArray];
@@ -1209,12 +1214,22 @@ int main(int argc, char** argv)
 
       h1_delta_tAvg_energyCorr[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_energyCorr_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",200,-1000.,1000.);
       fit_delta_tAvg_energyCorr[Vov][vth1][vth2] = new TF1(Form("fit_delta_tAvg_energyCorr_Vov%.1f_vth1_%02d_vth2_%02d", Vov,vth1,vth2),"gaus(0)",-1000.,1000.);
+
+      p1_delta_tAvgEnergyCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*0] = new TProfile(Form("p1_delta_tAvgEnergyCorr_vs_t1fine_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",0,iBar,Vov,vth1,vth2),"",128,-0.5,1023.5);
+      p1_delta_tAvgEnergyCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*1] = new TProfile(Form("p1_delta_tAvgEnergyCorr_vs_t1fine_array%d_bar%02i_Vov%.1f_vth1_%02d_vth2_%02d",1,iBar,Vov,vth1,vth2),"",128,-0.5,1023.5);
     }
 
     TF1* func_delta_tAvg_raw = fit_delta_tAvg_raw[Vov][vth1][vth2];
     int delta_tAvg = tAvg[1] - tAvg[0] - func_delta_tAvg_raw->GetParameter(1);
     h1_delta_tAvg[Vov][vth1][vth2] -> Fill( delta_tAvg );
-    h1_delta_tAvg_energyCorr[Vov][vth1][vth2] -> Fill( delta_tAvg - tAvgCorr[0] - tAvgCorr[1]);
+    float tAvg_energyCorr =  delta_tAvg - tAvgCorr[0] - tAvgCorr[1]; // why don't I call this delta_tAvg_energyCorr?
+    h1_delta_tAvg_energyCorr[Vov][vth1][vth2] -> Fill( tAvg_energyCorr );
+
+    if( fabs(tAvg_energyCorr) < 1000 )
+    {
+        p1_delta_tAvgEnergyCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*0] -> Fill( tFine[0], tAvg_energyCorr );
+        p1_delta_tAvgEnergyCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*1] -> Fill( tFine[1], tAvg_energyCorr );
+    }
   }
   std::cout << std::endl;
 
@@ -1242,6 +1257,8 @@ int main(int argc, char** argv)
           for(unsigned int iBar = 8; iBar < 9; ++iBar)
           {
             drawH1_deltaT(h1_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],h1_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray], "#Deltat [ps]", "events", plotDir+"/deltaT/",fit_deltaT_raw[Vov][vth1][vth2][iBar+num_bars*iArray],fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
+
+            drawP1(p1_delta_tAvgEnergyCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray], "t1fine", "#Delta_{t_{avg}} [ps]", plotDir+"/deltaT/");
 
             if( fit_deltaT_energyRatioCorr[Vov][vth1][vth2][iBar+num_bars*iArray] == NULL ) continue;
 
@@ -1393,6 +1410,11 @@ int main(int argc, char** argv)
     // fill plots for each array only if both have hits
     if( !hit_in_array[0] || !hit_in_array[1] ) continue;
 
+    std::vector<float> tFine = {0., 0.};
+    std::vector<long long> tAvg = {0, 0};
+    std::vector<long long> tAvgCorr = {0, 0};
+    std::vector<long long> tAvgPhaseCorr = {0, 0};
+
     for(int iArray = 0; iArray < 2; ++iArray)
     {
       int chL = ch_array_side1[iBar];
@@ -1414,18 +1436,37 @@ int main(int argc, char** argv)
       float deltaT = (*time)[channelIdx[chL]] - (*time)[channelIdx[chR]];
       float deltaT_energyRatioCorr = deltaT - func_energyRatioCorr->Eval(energyRatio) + func_energyRatioCorr->Eval(func_energyRatio->GetParameter(1));
 
-      float t1fineAve = 0.5*( (*t1fine)[channelIdx[chL]] + (*t1fine)[channelIdx[chR]] );
-      TProfile* prof = p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray];
-      h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( deltaT_energyRatioCorr - prof->GetBinContent(prof->FindBin(t1fineAve)) );
+      float energyMean = 0.5*((*energy)[channelIdx[chL]] + (*energy)[channelIdx[chR]]);
+      TF1* func_tAvgEnergyCorr = fit_tAvgEnergyCorr[Vov][vth1][vth2][iBar+num_bars*iArray];
+      tAvg[iArray] = 0.5*((*time)[channelIdx[chL]] + (*time)[channelIdx[chR]]);
+      tAvgCorr[iArray] = func_tAvgEnergyCorr->Eval(energyMean);
 
+      tFine[iArray] =  0.5*((*t1fine)[channelIdx[chL]]+(*t1fine)[channelIdx[chR]]);
+      TProfile* prof = p1_deltaT_energyRatioCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray];
+      h1_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray] -> Fill( deltaT_energyRatioCorr - prof->GetBinContent(prof->FindBin(tFine[iArray])) );
+
+      prof = p1_delta_tAvgEnergyCorr_vs_t1fine[Vov][vth1][vth2][iBar+num_bars*iArray];
+      tAvgPhaseCorr[iArray] = prof->GetBinContent(prof->FindBin(tFine[iArray]));
     }
+
+    if(!h1_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2])
+    {
+      h1_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2] = new TH1F(Form("h1_delta_tAvg_energyAndPhaseCorr_Vov%.1f_vth1_%02d_vth2_%02d",Vov,vth1,vth2),"",100,-1000.,1000.);
+      fit_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2] = new TF1(Form("fit_delta_tAvg_energyAndPhaseCorr_Vov%.1f_vth1_%02d_vth2_%02d", Vov,vth1,vth2),"gaus(0)",-1000.,1000.);
+    }
+
+    TF1* func_delta_tAvg_raw = fit_delta_tAvg_raw[Vov][vth1][vth2];
+    float delta_tAvg = tAvg[1] - tAvg[0] - func_delta_tAvg_raw->GetParameter(1);
+    float tAvg_energyCorr =  delta_tAvg - tAvgCorr[0] - tAvgCorr[1]; // why don't I call this delta_tAvg_energyCorr?
+    float tAvg_energyAndPhaseCorr =  tAvg_energyCorr - tAvgPhaseCorr[0] - tAvgPhaseCorr[1];
+    h1_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2] -> Fill( tAvg_energyAndPhaseCorr );
   }
   std::cout << std::endl;
 
   // draw 5th plots
   std::map<float, std::map<int, std::map<int, std::map<int, TGraphErrors*> > > >  g_tRes_energyRatioPhaseCorr;
   std::map<float, std::map<int, std::map<int, std::map<int, TGraphErrors*> > > > g_tRes_energyRatioPhaseCorr_vs_vth1;
-  std::map<float, std::map<int, std::map<int, TGraphErrors*> > > g_tAvgRes_energyCorr_vs_vth1;
+  std::map<float, std::map<int, std::map<int, TGraphErrors*> > > g_tAvgRes_energyAndPhaseCorr_vs_vth1;
 
   for(auto mapIt : h1_deltaT_raw )
   {
@@ -1441,13 +1482,15 @@ int main(int argc, char** argv)
         for(unsigned int iBar = 8; iBar < 9; ++iBar)
         {
 
-          if( g_tAvgRes_energyCorr_vs_vth1[Vov][vth2][iBar] == NULL )
+          drawH1_fitGaus(h1_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2], -1000., 1000., "#Delta_{t_{avg}} [ps]", "events", plotDir+"/deltaT/", fit_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2]);
+
+          if( g_tAvgRes_energyAndPhaseCorr_vs_vth1[Vov][vth2][iBar] == NULL )
           {
-            g_tAvgRes_energyCorr_vs_vth1[Vov][vth2][iBar] = new TGraphErrors();
-            g_tAvgRes_energyCorr_vs_vth1[Vov][vth2][iBar] -> SetName(Form("g_tAvgRes_energyCorr_vs_vth1_bar%02d_Vov%.1f_vth2_%02d",iBar,Vov,vth2));
+            g_tAvgRes_energyAndPhaseCorr_vs_vth1[Vov][vth2][iBar] = new TGraphErrors();
+            g_tAvgRes_energyAndPhaseCorr_vs_vth1[Vov][vth2][iBar] -> SetName(Form("g_tAvgRes_energyAndPhaseCorr_vs_vth1_bar%02d_Vov%.1f_vth2_%02d",iBar,Vov,vth2));
           }
-          float delta_tAvg_energyCorr_sigma = fit_delta_tAvg_energyCorr[Vov][vth1][vth2]->GetParameter(2);
-          g_tAvgRes_energyCorr_vs_vth1[Vov][vth2][iBar] -> SetPoint(g_tAvgRes_energyCorr_vs_vth1[Vov][vth2][iBar]->GetN(),vth1,delta_tAvg_energyCorr_sigma);
+          float delta_tAvg_energyAndPhaseCorr_sigma = fit_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2]->GetParameter(2);
+          g_tAvgRes_energyAndPhaseCorr_vs_vth1[Vov][vth2][iBar] -> SetPoint(g_tAvgRes_energyAndPhaseCorr_vs_vth1[Vov][vth2][iBar]->GetN(),vth1,delta_tAvg_energyAndPhaseCorr_sigma);
 
           for(int iArray = 0; iArray < 2; ++iArray)
           {
@@ -1469,7 +1512,7 @@ int main(int argc, char** argv)
             float tDiff_sigma = fit_deltaT_energyRatioPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2);
             float delta_tAvg_energyCorr_sigma = fit_delta_tAvg_energyCorr[Vov][vth1][vth2]->GetParameter(2);
             g_tRes_energyRatioPhaseCorr_vs_vth1[Vov][vth2][iBar][iArray] -> SetPoint(g_tRes_energyRatioPhaseCorr_vs_vth1[Vov][vth2][iBar][iArray]->GetN(),vth1,tDiff_sigma);
-            std::cout << "vth1: " << vth1 << ", tDiff sigma: " << tDiff_sigma << ", delta_tAvg_energyCorr_sigma: " << delta_tAvg_energyCorr_sigma << std::endl;
+            std::cout << "vth1: " << vth1 << ", tDiff sigma: " << tDiff_sigma << ", delta_tAvg_energyCorr_sigma: " << delta_tAvg_energyCorr_sigma << ", delta_tAvg_energyAndPhaseCorr_sigma: " << delta_tAvg_energyAndPhaseCorr_sigma << std::endl;
           }
         }
       }
@@ -1497,8 +1540,8 @@ int main(int argc, char** argv)
   // time resolution vs. threshold
   std::map<int, std::map<int, std::map<int, std::vector<TGraphErrors*> > > > g_tRes_energyRatioPhaseCorr_vs_vth1_vec;
   std::map<int, std::map<int, std::map<int, std::vector<std::string> > > > g_tRes_energyRatioPhaseCorr_vs_vth1_labels;
-  std::map<int, std::map<int, std::vector<TGraphErrors*> > > g_tAvgRes_energyCorr_vs_vth1_vec;
-  std::map<int, std::map<int, std::vector<std::string> > > g_tAvgRes_energyCorr_vs_vth1_labels;
+  std::map<int, std::map<int, std::vector<TGraphErrors*> > > g_tAvgRes_energyAndPhaseCorr_vs_vth1_vec;
+  std::map<int, std::map<int, std::vector<std::string> > > g_tAvgRes_energyAndPhaseCorr_vs_vth1_labels;
   for(auto mapIt : g_tRes_energyRatioPhaseCorr_vs_vth1 )
   {
     float Vov = mapIt.first;
@@ -1510,8 +1553,8 @@ int main(int argc, char** argv)
       {
         int iBar = mapIt3.first;
 
-        g_tAvgRes_energyCorr_vs_vth1_vec[vth2][iBar].push_back(g_tAvgRes_energyCorr_vs_vth1[Vov][vth2][iBar]);
-        g_tAvgRes_energyCorr_vs_vth1_labels[vth2][iBar].push_back(Form("V_{OV} = %.1f V",Vov));
+        g_tAvgRes_energyAndPhaseCorr_vs_vth1_vec[vth2][iBar].push_back(g_tAvgRes_energyAndPhaseCorr_vs_vth1[Vov][vth2][iBar]);
+        g_tAvgRes_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar].push_back(Form("V_{OV} = %.1f V",Vov));
 
         for(auto mapIt4 : mapIt3.second)
         {
@@ -1530,7 +1573,7 @@ int main(int argc, char** argv)
     {
       int iBar = mapIt2.first;
 
-      drawG_vector(g_tAvgRes_energyCorr_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "#sigma_{t_{avg}} [ps]", 0., 300., plotDir+"/timeResolution_phaseCorr/",false,Form("g_tAvgRes_energyCorr_vs_vth1_vth2_%02d_bar%02d",vth2,iBar),&g_tAvgRes_energyCorr_vs_vth1_labels[vth2][iBar]);
+      drawG_vector(g_tAvgRes_energyAndPhaseCorr_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "#sigma_{#Delta_{t_{avg}}} [ps]", 0., 300., plotDir+"/timeResolution_phaseCorr/",false,Form("g_tAvgRes_energyAndPhaseCorr_vs_vth1_vth2_%02d_bar%02d",vth2,iBar),&g_tAvgRes_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar]);
 
       for(auto mapIt3 : mapIt2.second)
       {
