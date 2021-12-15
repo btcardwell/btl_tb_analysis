@@ -1250,6 +1250,8 @@ int main(int argc, char** argv)
 
         drawH1_fitGaus(h1_delta_tAvg_energyCorr[Vov][vth1][vth2], -1000., 1000., "#Delta_{t_{avg}} [ps]", "events", plotDir+"delta_tAvg", fit_delta_tAvg_energyCorr[Vov][vth1][vth2]);
 
+        drawH1_deltaT(h1_delta_tAvg[Vov][vth1][vth2], h1_delta_tAvg_energyCorr[Vov][vth1][vth2], "#Delta_{t_{avg}} [ps]", "events", plotDir+"delta_tAvg", fit_delta_tAvg[Vov][vth1][vth2], fit_delta_tAvg_energyCorr[Vov][vth1][vth2]);
+
         for(int iArray = 0; iArray < 2; ++iArray)
         {
           for(unsigned int iBar = 8; iBar < 9; ++iBar)
@@ -1412,6 +1414,8 @@ int main(int argc, char** argv)
         {
 
           drawH1_fitGaus(h1_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2], -1000., 1000., "#Delta_{t_{avg}} [ps]", "events", plotDir+"delta_tAvg", fit_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2]);
+
+          drawH1_deltaT(h1_delta_tAvg_energyCorr[Vov][vth1][vth2], h1_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2], "#Delta_{t_{avg}} [ps]", "events", plotDir+"delta_tAvg", fit_delta_tAvg_energyCorr[Vov][vth1][vth2], fit_delta_tAvg_energyAndPhaseCorr[Vov][vth1][vth2]);
 
           if( g_tAvgRes_energyAndPhaseCorr_vs_vth1[Vov][vth2][iBar] == NULL )
           {
