@@ -594,10 +594,13 @@ int main(int argc, char** argv)
   std::map<float, std::map<int, std::map<int, std::map<int,TF1*> > > > fit_tAvgEnergyCorr;
   std::map<float, std::map<int, std::map<int, std::map<int,TProfile*> > > > p1_delta_tAvgEnergyCorr_vs_t1fine;
 
+  std::map<int, bool> pass_shower_rejection;
+
 
   // 1st loop over events: get energy and tot
   for(int entry = 0; entry < nEntries; ++entry)
   {
+    pass_shower_rejection[entry] = false;
     if( entry%prescale != 0 ) continue;
     data -> GetEntry(entry);
     if( entry%100000 == 0 )
@@ -695,6 +698,8 @@ int main(int argc, char** argv)
 
     // fill plots for each array only if both have non-shower hits
     if( !hit_in_array[0] || !hit_in_array[1] ) continue;
+    pass_shower_rejection[entry] = true;
+
     for(int iArray = 0; iArray < 2; ++iArray)
     {
       int chL = ch_array_side1[iBar];
@@ -787,6 +792,7 @@ int main(int argc, char** argv)
   for(int entry = 0; entry < nEntries; ++entry)
   {
     if( entry%prescale != 0 ) continue;
+    if (!pass_shower_rejection[entry]) continue;
     data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
@@ -801,56 +807,6 @@ int main(int argc, char** argv)
 
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
-
-    for(int iArray = 0; iArray < 2; ++iArray)
-    {
-      if( iArray == 1 && !hit_in_array[0] ) continue;
-
-      // get array energy for shower rejection
-      float energy_array = 0.0;
-      for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
-      {
-        int chL = ch_array_side1[iBar];
-        int chR = ch_array_side2[iBar];
-        if( iArray == 1 ) chL += 64;
-        if( iArray == 1 ) chR += 64;
-
-        if( channelIdx[chL] < 0 ) continue;
-        if( channelIdx[chR] < 0 ) continue;
-
-        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-
-        energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-      }
-
-      int chL = ch_array_side1[iBar];
-      int chR = ch_array_side2[iBar];
-      if( iArray == 1 ) chL += 64;
-      if( iArray == 1 ) chR += 64;
-
-      if( channelIdx[chL] < 0 ) continue;
-      if( channelIdx[chR] < 0 ) continue;
-
-      // reject shower events
-      if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
-
-      if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-      if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-      if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-      if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-
-      float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-      TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
-      if( energyMean < 0.80*func->GetParameter(1) ) continue;
-
-      hit_in_array[iArray] = true;
-    }
-
-    // fill plots for each array only if both have hits
-    if( !hit_in_array[0] || !hit_in_array[1] ) continue;
     
     // for delta_tAvg calculation
     // perhaps I should do something to ensure that these default values are never used
@@ -935,6 +891,7 @@ int main(int argc, char** argv)
   for(int entry = 0; entry < nEntries; ++entry)
   {
     if( entry%prescale != 0 ) continue;
+    if (!pass_shower_rejection[entry]) continue;
     data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
@@ -949,56 +906,6 @@ int main(int argc, char** argv)
 
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
-
-    for(int iArray = 0; iArray < 2; ++iArray)
-    {
-      if( iArray == 1 && !hit_in_array[0] ) continue;
-
-      // get array energy for shower rejection
-      float energy_array = 0.0;
-      for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
-      {
-        int chL = ch_array_side1[iBar];
-        int chR = ch_array_side2[iBar];
-        if( iArray == 1 ) chL += 64;
-        if( iArray == 1 ) chR += 64;
-
-        if( channelIdx[chL] < 0 ) continue;
-        if( channelIdx[chR] < 0 ) continue;
-
-        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-
-        energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-      }
-
-      int chL = ch_array_side1[iBar];
-      int chR = ch_array_side2[iBar];
-      if( iArray == 1 ) chL += 64;
-      if( iArray == 1 ) chR += 64;
-
-      if( channelIdx[chL] < 0 ) continue;
-      if( channelIdx[chR] < 0 ) continue;
-
-      // reject shower events
-      if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
-
-      if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-      if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-      if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-      if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-
-      float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-      TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
-      if( energyMean < 0.80*func->GetParameter(1) ) continue;
-
-      hit_in_array[iArray] = true;
-    }
-
-    // fill plots for each array only if both have hits
-    if( !hit_in_array[0] || !hit_in_array[1] ) continue;
 
     // for delta_tAvg calculation
     // perhaps I should do something to ensure that these default values are never used
@@ -1093,6 +1000,7 @@ int main(int argc, char** argv)
   for(int entry = 0; entry < nEntries; ++entry)
   {
     if( entry%prescale != 0 ) continue;
+    if (!pass_shower_rejection[entry]) continue;
     data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
@@ -1107,60 +1015,6 @@ int main(int argc, char** argv)
 
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
-
-    for(int iArray = 0; iArray < 2; ++iArray)
-    {
-      if( iArray == 1 && !hit_in_array[0] ) continue;
-
-      // get array energy for shower rejection
-      float energy_array = 0.0;
-      for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
-      {
-        int chL = ch_array_side1[iBar];
-        int chR = ch_array_side2[iBar];
-        if( iArray == 1 ) chL += 64;
-        if( iArray == 1 ) chR += 64;
-
-        if( channelIdx[chL] < 0 ) continue;
-        if( channelIdx[chR] < 0 ) continue;
-
-        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-
-        energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-      }
-
-      int chL = ch_array_side1[iBar];
-      int chR = ch_array_side2[iBar];
-      if( iArray == 1 ) chL += 64;
-      if( iArray == 1 ) chR += 64;
-
-      if( channelIdx[chL] < 0 ) continue;
-      if( channelIdx[chR] < 0 ) continue;
-
-      // reject shower events
-      if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
-
-      if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-      if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-      if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-      if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-
-      float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-      TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
-      if( energyMean < 0.80*func->GetParameter(1) ) continue;
-
-      float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
-      TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
-      if( fabs(energyRatio-func_energyRatio->GetParameter(1)) > 2.*func_energyRatio->GetParameter(2) ) continue;
-
-      hit_in_array[iArray] = true;
-    }
-
-    // fill plots for each array only if both have hits
-    if( !hit_in_array[0] || !hit_in_array[1] ) continue;
 
     std::vector<long double> tAvg = {0, 0};
     std::vector<long double> tAvgCorr = {0, 0};
@@ -1270,6 +1124,7 @@ int main(int argc, char** argv)
   for(int entry = 0; entry < nEntries; ++entry)
   {
     if( entry%prescale != 0 ) continue;
+    if (!pass_shower_rejection[entry]) continue;
     data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
@@ -1284,60 +1139,6 @@ int main(int argc, char** argv)
 
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
-
-    for(int iArray = 0; iArray < 2; ++iArray)
-    {
-      if( iArray == 1 && !hit_in_array[0] ) continue;
-
-      // get array energy for shower rejection
-      float energy_array = 0.0;
-      for(unsigned int iBar = 0; iBar < num_bars; ++iBar)
-      {
-        int chL = ch_array_side1[iBar];
-        int chR = ch_array_side2[iBar];
-        if( iArray == 1 ) chL += 64;
-        if( iArray == 1 ) chR += 64;
-
-        if( channelIdx[chL] < 0 ) continue;
-        if( channelIdx[chR] < 0 ) continue;
-
-        if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-        if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-
-        energy_array += 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-      }
-
-      int chL = ch_array_side1[iBar];
-      int chR = ch_array_side2[iBar];
-      if( iArray == 1 ) chL += 64;
-      if( iArray == 1 ) chR += 64;
-
-      if( channelIdx[chL] < 0 ) continue;
-      if( channelIdx[chR] < 0 ) continue;
-
-      // reject shower events
-      if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
-
-      if( (*tot)[channelIdx[chL]]/1000. <  0. ) continue;
-      if( (*tot)[channelIdx[chL]]/1000. > 20. ) continue;
-      if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
-      if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
-
-      float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
-      TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
-      if( energyMean < 0.80*func->GetParameter(1) ) continue;
-
-      float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
-      TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
-      if( fabs(energyRatio-func_energyRatio->GetParameter(1)) > 2.*func_energyRatio->GetParameter(2) ) continue;
-
-      hit_in_array[iArray] = true;
-    }
-
-    // fill plots for each array only if both have hits
-    if( !hit_in_array[0] || !hit_in_array[1] ) continue;
 
     std::vector<float> tFine = {0., 0.};
     std::vector<long double> tAvg = {0, 0};
