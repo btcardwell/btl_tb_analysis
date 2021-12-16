@@ -803,8 +803,6 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
 
-    std::vector<bool> hit_in_array = {false, false};
-
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
     
@@ -901,8 +899,6 @@ int main(int argc, char** argv)
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
-
-    std::vector<bool> hit_in_array = {false, false};
 
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
@@ -1010,8 +1006,6 @@ int main(int argc, char** argv)
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
-
-    std::vector<bool> hit_in_array = {false, false};
 
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
@@ -1134,8 +1128,6 @@ int main(int argc, char** argv)
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
-
-    std::vector<bool> hit_in_array = {false, false};
 
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
