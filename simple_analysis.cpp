@@ -595,6 +595,8 @@ int main(int argc, char** argv)
   std::map<float, std::map<int, std::map<int, std::map<int,TProfile*> > > > p1_delta_tAvgEnergyCorr_vs_t1fine;
 
   std::map<int, bool> pass_shower_rejection;
+  std::map<int, bool> pass_mip_selection;
+  std::map<int, bool> pass_energyRatio_selection;
 
 
   // 1st loop over events: get energy and tot
@@ -792,7 +794,7 @@ int main(int argc, char** argv)
   for(int entry = 0; entry < nEntries; ++entry)
   {
     if( entry%prescale != 0 ) continue;
-    if (!pass_shower_rejection[entry]) continue;
+    if ( !pass_shower_rejection[entry] ) continue;
     data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
@@ -805,6 +807,24 @@ int main(int argc, char** argv)
 
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
+
+    // apply MIP selection
+    pass_mip_selection[entry] = false;
+    std::vector<long double> pass_mip_selection_array = {false, false};
+    for(int iArray = 0; iArray < 2; ++iArray)
+    {
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
+
+      float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
+      TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
+      if( energyMean > 0.80*func->GetParameter(1) ) pass_mip_selection_array[iArray] = true;
+    }
+
+    if( !pass_mip_selection_array[0] || !pass_mip_selection_array[1] ) continue;
+    pass_mip_selection[entry] = true;
     
     // for delta_tAvg calculation
     // perhaps I should do something to ensure that these default values are never used
@@ -889,7 +909,8 @@ int main(int argc, char** argv)
   for(int entry = 0; entry < nEntries; ++entry)
   {
     if( entry%prescale != 0 ) continue;
-    if (!pass_shower_rejection[entry]) continue;
+    if ( !pass_shower_rejection[entry] ) continue;
+    if ( !pass_mip_selection[entry] ) continue;
     data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
@@ -996,7 +1017,8 @@ int main(int argc, char** argv)
   for(int entry = 0; entry < nEntries; ++entry)
   {
     if( entry%prescale != 0 ) continue;
-    if (!pass_shower_rejection[entry]) continue;
+    if ( !pass_shower_rejection[entry] ) continue;
+    if ( !pass_mip_selection[entry] ) continue;
     data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
@@ -1009,6 +1031,24 @@ int main(int argc, char** argv)
 
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
+
+    // apply energyRatio selection
+    pass_energyRatio_selection[entry] = false;
+    std::vector<long double> pass_energyRatio_selection_array = {false, false};
+    for(int iArray = 0; iArray < 2; ++iArray)
+    {
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
+
+      float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
+      TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
+      if( fabs(energyRatio-func_energyRatio->GetParameter(1)) > 2.*func_energyRatio->GetParameter(2) ) continue;
+    }
+
+    if( !pass_energyRatio_selection_array[0] || !pass_energyRatio_selection_array[1] ) continue;
+    pass_energyRatio_selection[entry] = true;
 
     std::vector<long double> tAvg = {0, 0};
     std::vector<long double> tAvgCorr = {0, 0};
@@ -1118,7 +1158,9 @@ int main(int argc, char** argv)
   for(int entry = 0; entry < nEntries; ++entry)
   {
     if( entry%prescale != 0 ) continue;
-    if (!pass_shower_rejection[entry]) continue;
+    if ( !pass_shower_rejection[entry] ) continue;
+    if ( !pass_mip_selection[entry] ) continue;
+    if ( !pass_energyRatio_selection[entry] ) continue;
     data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
