@@ -602,13 +602,13 @@ int main(int argc, char** argv)
   // 1st loop over events: get energy and tot
   for(int entry = 0; entry < nEntries; ++entry)
   {
-    pass_shower_rejection[entry] = false;
-    if( entry%prescale != 0 ) continue;
-    data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
       std::cout << ">>> 1st loop - reading entry " << entry << " / " << nEntries << " (" << 100.*entry/nEntries << "%)" << "\r" << std::flush;
     }
+    pass_shower_rejection[entry] = false;
+    if( entry%prescale != 0 ) continue;
+    data -> GetEntry(entry);
 
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
@@ -793,13 +793,13 @@ int main(int argc, char** argv)
   // 2nd loop over events: get energy and tot ratios; calculate delta_tAvg_raw
   for(int entry = 0; entry < nEntries; ++entry)
   {
-    if( entry%prescale != 0 ) continue;
-    if ( !pass_shower_rejection[entry] ) continue;
-    data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
       std::cout << ">>> 2nd loop - reading entry " << entry << " / " << nEntries << " (" << 100.*entry/nEntries << "%)" << "\r" << std::flush;
     }
+    if( entry%prescale != 0 ) continue;
+    if ( !pass_shower_rejection[entry] ) continue;
+    data -> GetEntry(entry);
 
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
@@ -908,14 +908,14 @@ int main(int argc, char** argv)
   // 3rd loop over events: derive energy ratio correction to deltaT
   for(int entry = 0; entry < nEntries; ++entry)
   {
-    if( entry%prescale != 0 ) continue;
-    if ( !pass_shower_rejection[entry] ) continue;
-    if ( !pass_mip_selection[entry] ) continue;
-    data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
       std::cout << ">>> 3rd loop - reading entry " << entry << " / " << nEntries << " (" << 100.*entry/nEntries << "%)" << "\r" << std::flush;
     }
+    if( entry%prescale != 0 ) continue;
+    if ( !pass_shower_rejection[entry] ) continue;
+    if ( !pass_mip_selection[entry] ) continue;
+    data -> GetEntry(entry);
 
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
@@ -1016,14 +1016,14 @@ int main(int argc, char** argv)
   // 4th loop over events: derive phase correction to deltaT
   for(int entry = 0; entry < nEntries; ++entry)
   {
-    if( entry%prescale != 0 ) continue;
-    if ( !pass_shower_rejection[entry] ) continue;
-    if ( !pass_mip_selection[entry] ) continue;
-    data -> GetEntry(entry);
     if( entry%100000 == 0 )
     {
       std::cout << ">>> 4th loop - reading entry " << entry << " / " << nEntries << " (" << 100.*entry/nEntries << "%)" << "\r" << std::flush;
     }
+    if( entry%prescale != 0 ) continue;
+    if ( !pass_shower_rejection[entry] ) continue;
+    if ( !pass_mip_selection[entry] ) continue;
+    data -> GetEntry(entry);
 
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
@@ -1157,15 +1157,15 @@ int main(int argc, char** argv)
   // 5th loop over events: derive time resolution from width of fully corrected tDiff distribution
   for(int entry = 0; entry < nEntries; ++entry)
   {
+    if( entry%100000 == 0 )
+    {
+      std::cout << ">>> 5th loop - reading entry " << entry << " / " << nEntries << " (" << 100.*entry/nEntries << "%)" << "\r" << std::flush;
+    }
     if( entry%prescale != 0 ) continue;
     if ( !pass_shower_rejection[entry] ) continue;
     if ( !pass_mip_selection[entry] ) continue;
     if ( !pass_energyRatio_selection[entry] ) continue;
     data -> GetEntry(entry);
-    if( entry%100000 == 0 )
-    {
-      std::cout << ">>> 5th loop - reading entry " << entry << " / " << nEntries << " (" << 100.*entry/nEntries << "%)" << "\r" << std::flush;
-    }
 
     float Vov = step1;
     int vth1 = int(step2/10000.)-1;
