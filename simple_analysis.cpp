@@ -601,6 +601,7 @@ int main(int argc, char** argv)
 
   std::map<int, bool> pass_shower_rejection;
   std::map<int, bool> pass_mip_selection;
+  std::map<int, bool> pass_tFine_selection;
   std::map<int, bool> pass_energyRatio_selection;
 
 
@@ -929,6 +930,21 @@ int main(int argc, char** argv)
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
 
+    // apply tFine selection
+    pass_tFine_selection[entry] = false;
+    std::vector<float> tFine = {0., 0.};
+    for(int iArray = 0; iArray < 2; ++iArray)
+    {
+      int chL = ch_array_side1[iBar];
+      int chR = ch_array_side2[iBar];
+      if( iArray == 1 ) chL += 64;
+      if( iArray == 1 ) chR += 64;
+
+      tFine[iArray] = 0.5*((*t1fine)[channelIdx[chL]]+(*t1fine)[channelIdx[chR]]);
+    }
+    if( tFine[1] - tFine[0] > 100 ) continue;
+    pass_tFine_selection[entry] = true;
+    
     // for delta_tAvg calculation
     // perhaps I should do something to ensure that these default values are never used
     std::vector<long double> tAvg = {0, 0};
@@ -1028,6 +1044,7 @@ int main(int argc, char** argv)
     if( entry%prescale != 0 ) continue;
     if ( !pass_shower_rejection[entry] ) continue;
     if ( !pass_mip_selection[entry] ) continue;
+    if ( !pass_tFine_selection[entry] ) continue;
     data -> GetEntry(entry);
 
     float Vov = step1;
@@ -1188,6 +1205,7 @@ int main(int argc, char** argv)
     if( entry%prescale != 0 ) continue;
     if ( !pass_shower_rejection[entry] ) continue;
     if ( !pass_mip_selection[entry] ) continue;
+    if ( !pass_tFine_selection[entry] ) continue;
     if ( !pass_energyRatio_selection[entry] ) continue;
     data -> GetEntry(entry);
 
@@ -1367,6 +1385,10 @@ int main(int argc, char** argv)
 
         g_tResSummary_energyAndPhaseCorr_vs_vth1_vec[vth2][iBar].push_back(g_tAvg_actualRes_vs_vth1[Vov][vth2][iBar]);
         g_tResSummary_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar].push_back(Form("delta_tAvg; array 1; V_{OV} = %.1f V",Vov));
+
+        drawG_vector(g_tAvgRes_energyAndPhaseCorr_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "#sigma_{#Delta_{t_{avg}}} [ps]", 0., 300., plotDir+"timeResolution",false,Form("g_tAvgRes_energyAndPhaseCorr_vs_vth1_vth2_%02d_bar%02d",vth2,iBar),&g_tAvgRes_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar]);
+
+        drawG_vector(g_tResSummary_energyAndPhaseCorr_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "Time resolution [ps]", 0., 300., plotDir+"timeResolution",false,Form("g_tResSummary_energyAndPhaseCorr_vs_vth1_VoV%.1f_vth2_%02d_bar%02d",Vov,vth2,iBar),&g_tResSummary_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar]);
       }
     }
   }
@@ -1377,10 +1399,6 @@ int main(int argc, char** argv)
     for(auto mapIt2 : mapIt.second)
     {
       int iBar = mapIt2.first;
-
-      drawG_vector(g_tAvgRes_energyAndPhaseCorr_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "#sigma_{#Delta_{t_{avg}}} [ps]", 0., 300., plotDir+"timeResolution",false,Form("g_tAvgRes_energyAndPhaseCorr_vs_vth1_vth2_%02d_bar%02d",vth2,iBar),&g_tAvgRes_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar]);
-
-      drawG_vector(g_tResSummary_energyAndPhaseCorr_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "Time resolution [ps]", 0., 300., plotDir+"timeResolution",false,Form("g_tResSummary_energyAndPhaseCorr_vs_vth1_vec%02d_bar%02d",vth2,iBar),&g_tResSummary_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar]);
 
       for(auto mapIt3 : mapIt2.second)
       {
