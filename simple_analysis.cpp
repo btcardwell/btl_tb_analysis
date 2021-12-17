@@ -810,7 +810,7 @@ int main(int argc, char** argv)
 
     // apply MIP selection
     pass_mip_selection[entry] = false;
-    std::vector<long double> pass_mip_selection_array = {false, false};
+    std::vector<bool> pass_mip_selection_array = {false, false};
     for(int iArray = 0; iArray < 2; ++iArray)
     {
       int chL = ch_array_side1[iBar];
@@ -820,7 +820,7 @@ int main(int argc, char** argv)
 
       float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
-      if( energyMean > 0.80*func->GetParameter(1) ) pass_mip_selection_array[iArray] = true;
+      pass_mip_selection_array[iArray] = ( energyMean > 0.80*func->GetParameter(1) );
     }
 
     if( !pass_mip_selection_array[0] || !pass_mip_selection_array[1] ) continue;
@@ -1034,7 +1034,7 @@ int main(int argc, char** argv)
 
     // apply energyRatio selection
     pass_energyRatio_selection[entry] = false;
-    std::vector<long double> pass_energyRatio_selection_array = {false, false};
+    std::vector<bool> pass_energyRatio_selection_array = {false, false};
     for(int iArray = 0; iArray < 2; ++iArray)
     {
       int chL = ch_array_side1[iBar];
@@ -1044,7 +1044,7 @@ int main(int argc, char** argv)
 
       float energyRatio = (*energy)[channelIdx[chL]]/(*energy)[channelIdx[chR]];
       TF1* func_energyRatio = fit_energyRatio[Vov][vth1][vth2][iBar+num_bars*iArray];
-      if( fabs(energyRatio-func_energyRatio->GetParameter(1)) > 2.*func_energyRatio->GetParameter(2) ) continue;
+      pass_energyRatio_selection_array[iArray] = ( fabs(energyRatio-func_energyRatio->GetParameter(1)) < 2.*func_energyRatio->GetParameter(2) );
     }
 
     if( !pass_energyRatio_selection_array[0] || !pass_energyRatio_selection_array[1] ) continue;
