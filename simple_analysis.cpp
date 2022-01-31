@@ -601,7 +601,6 @@ int main(int argc, char** argv)
 
   std::map<int, bool> pass_shower_rejection;
   std::map<int, bool> pass_mip_selection;
-  std::map<int, bool> pass_tFine_selection;
   std::map<int, bool> pass_energyRatio_selection;
 
 
@@ -930,21 +929,6 @@ int main(int argc, char** argv)
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
 
-    // apply tFine selection
-    pass_tFine_selection[entry] = false;
-    std::vector<float> tFine = {0., 0.};
-    for(int iArray = 0; iArray < 2; ++iArray)
-    {
-      int chL = ch_array_side1[iBar];
-      int chR = ch_array_side2[iBar];
-      if( iArray == 1 ) chL += 64;
-      if( iArray == 1 ) chR += 64;
-
-      tFine[iArray] = 0.5*((*t1fine)[channelIdx[chL]]+(*t1fine)[channelIdx[chR]]);
-    }
-    if( tFine[1] - tFine[0] > 100 ) continue;
-    pass_tFine_selection[entry] = true;
-    
     // for delta_tAvg calculation
     // perhaps I should do something to ensure that these default values are never used
     std::vector<long double> tAvg = {0, 0};
@@ -1044,7 +1028,6 @@ int main(int argc, char** argv)
     if( entry%prescale != 0 ) continue;
     if ( !pass_shower_rejection[entry] ) continue;
     if ( !pass_mip_selection[entry] ) continue;
-    if ( !pass_tFine_selection[entry] ) continue;
     data -> GetEntry(entry);
 
     float Vov = step1;
@@ -1205,7 +1188,6 @@ int main(int argc, char** argv)
     if( entry%prescale != 0 ) continue;
     if ( !pass_shower_rejection[entry] ) continue;
     if ( !pass_mip_selection[entry] ) continue;
-    if ( !pass_tFine_selection[entry] ) continue;
     if ( !pass_energyRatio_selection[entry] ) continue;
     data -> GetEntry(entry);
 
