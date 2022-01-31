@@ -1391,10 +1391,10 @@ int main(int argc, char** argv)
         }
 
         g_tResSummary_energyAndPhaseCorr_vs_vth1_vec[vth2][iBar].push_back(g_tAvg_actualRes_vs_vth1[Vov][vth2][iBar]);
-        g_tResSummary_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar].push_back(Form("delta_tAvg; array 1; V_{OV} = %.1f V",Vov));
+        g_tResSummary_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar].push_back(Form("delta_tAvg; array 1 - array 0; V_{OV} = %.1f V",Vov));
 
         g_tResSummary_energyCorr_vs_vth1_vec[vth2][iBar].push_back(g_tAvg_noPhaseCorr_actualRes_vs_vth1[Vov][vth2][iBar]);
-        g_tResSummary_energyCorr_vs_vth1_labels[vth2][iBar].push_back(Form("delta_tAvg; array 1; V_{OV} = %.1f V",Vov));
+        g_tResSummary_energyCorr_vs_vth1_labels[vth2][iBar].push_back(Form("delta_tAvg; array 1 - array 0; V_{OV} = %.1f V",Vov));
 
         drawG_vector(g_tAvgRes_energyAndPhaseCorr_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "#sigma_{#Delta_{t_{avg}}} [ps]", 0., 300., plotDir+"timeResolution",false,Form("g_tAvgRes_energyAndPhaseCorr_vs_vth1_vth2_%02d_bar%02d",vth2,iBar),&g_tAvgRes_energyAndPhaseCorr_vs_vth1_labels[vth2][iBar]);
 
