@@ -486,6 +486,7 @@ int main(int argc, char** argv)
   std::vector<float>* energy = 0;
   std::vector<long long>* time = 0;
   std::vector<float>* qT1 = 0;
+  std::vector<unsigned short>* t1coarse = 0;
   std::vector<unsigned short>* t1fine = 0;
   data -> SetBranchStatus("*",0);
   data -> SetBranchStatus("step1",     1); data -> SetBranchAddress("step1",    &step1);
@@ -495,6 +496,7 @@ int main(int argc, char** argv)
   data -> SetBranchStatus("energy",    1); data -> SetBranchAddress("energy",   &energy);
   data -> SetBranchStatus("time",      1); data -> SetBranchAddress("time",     &time);
   data -> SetBranchStatus("qT1",       1); data -> SetBranchAddress("qT1",      &qT1);
+  data -> SetBranchStatus("t1coarse",  1); data -> SetBranchAddress("t1coarse", &t1coarse);
   data -> SetBranchStatus("t1fine",    1); data -> SetBranchAddress("t1fine",   &t1fine);
 
   // create plot folder
@@ -619,6 +621,8 @@ int main(int argc, char** argv)
     int vth1 = int(step2/10000.)-1;
     int vth2 = int((step2-10000*(vth1+1))/100.)-1;
 
+    std::vector<unsigned short> tCoarse = {0, 0};
+
     std::vector<bool> hit_in_array = {false, false};
     std::vector<bool> hit_in_array_noShowerRejection = {false, false};
 
@@ -662,13 +666,20 @@ int main(int argc, char** argv)
       if( (*tot)[channelIdx[chR]]/1000. <  0. ) continue;
       if( (*tot)[channelIdx[chR]]/1000. > 20. ) continue;
 
+      // require hits to be in same clock cycle to avoid complex t1fine dependencies
+      if( (*t1coarse)[channelIdx[chL]] != (*t1coarse)[channelIdx[chR]] ) continue;
+
       hit_in_array_noShowerRejection[iArray] = true;
 
       // reject shower events
       if( 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]) < 0.8*energy_array ) continue;
 
       hit_in_array[iArray] = true;
+
+      tCoarse[iArray] = (*t1coarse)[channelIdx[chL]];
     }
+    // require expected t1coarse difference between arrays to avoid complex t1fine dependencies
+    if( tCoarse[1] - tCoarse[0] != -2 ) continue;
 
     // fill noShowerRejection plots for each array only if both have hits
     if( !hit_in_array_noShowerRejection[0] || !hit_in_array_noShowerRejection[1] ) continue;
