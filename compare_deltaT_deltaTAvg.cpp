@@ -488,6 +488,7 @@ int main(int argc, char** argv)
   std::cout << "timeLeng:       " << timeLeng << " s" << std::endl;
   std::cout << "PreScale:       " << prescale << std::endl;
   std::cout << "Pedestals:      " << pedestals << std::endl;
+  std::cout << "mipPeakOnly:    " << mipPeakOnly << std::endl;
   std::cout << "============================================\n\n"  << std::endl;
 
   // define branches
