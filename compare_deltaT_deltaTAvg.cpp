@@ -311,7 +311,8 @@ void drawG_arrays(TGraphErrors* g1, TGraphErrors* g2, std::string xtitle, std::s
 
 void drawH1_energy(TH1F* h_LR, TH1F* h_L, TH1F* h_R,
                    float xmin, float xmax, std::string xtitle, std::string ytitle,
-                   std::string plotDir, TF1* f_langaus, bool logy=true, std::string name="")
+                   std::string plotDir, TF1* f_langaus, bool logy=true, std::string name="",
+                   bool restrictEnergy=false)
 {
   if( h_LR == NULL ) return;
   if( h_LR->GetEntries() < 100 ) return;
@@ -364,7 +365,13 @@ void drawH1_energy(TH1F* h_LR, TH1F* h_L, TH1F* h_R,
   line -> SetLineStyle(7);
   line -> SetLineWidth(2);
   line -> SetLineColor(kBlack);
-  line -> Draw("same");
+
+  if( !restrictEnergy ) line -> Draw("same");
+  else
+  {
+    line -> DrawLine(0.90*f_langaus->GetParameter(1),h_LR->GetMinimum(),0.90*f_langaus->GetParameter(1),h_LR->GetMaximum());
+    line -> DrawLine(1.15*f_langaus->GetParameter(1),h_LR->GetMinimum(),1.15*f_langaus->GetParameter(1),h_LR->GetMaximum());
+  }
 
   if( name!="" ) c -> Print(Form("%s/%s.png",plotDir.c_str(),name.c_str()));
   else c -> Print(Form("%s/%s.png",plotDir.c_str(),h_LR -> GetName()));
@@ -461,6 +468,7 @@ int main(int argc, char** argv)
   float timeLeng = 1.; if( argc > 2 ) timeLeng = atof(argv[2]);
   int prescale = 1;    if( argc > 3 ) prescale = atoi(argv[3]);
   int pedestals = 0;   if( argc > 4 ) pedestals = atoi(argv[4]);
+  int mipPeakOnly = 0;   if( argc > 5 ) mipPeakOnly = atoi(argv[5]);
 
   // open file
   TChain* data = new TChain("data","data");
@@ -799,11 +807,11 @@ int main(int argc, char** argv)
         {
           for(unsigned int iBar = 8; iBar < 9; ++iBar)
           {
-            drawH1_energy(h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "energy [ADC]", "events", plotDir+"energy", fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
-            drawH1_energy(h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "ToT [ns]", "events", plotDir+"tot", fit_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawH1_energy(h1_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "energy [ADC]", "events", plotDir+"energy", fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray],true,"",mipPeakOnly);
+            drawH1_energy(h1_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "ToT [ns]", "events", plotDir+"tot", fit_tot_LR[Vov][vth1][vth2][iBar+num_bars*iArray],true,"",mipPeakOnly);
 
-            drawH1_energy(h1_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "energy [ADC]", "events", plotDir+"energy", fit_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]);
-            drawH1_energy(h1_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "ToT [ns]", "events", plotDir+"tot", fit_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray]);
+            drawH1_energy(h1_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_energy_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "energy [ADC]", "events", plotDir+"energy", fit_energy_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray],true,"",mipPeakOnly);
+            drawH1_energy(h1_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_L_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], h1_tot_R_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray], 0., 1000, "ToT [ns]", "events", plotDir+"tot", fit_tot_LR_noShowerRejection[Vov][vth1][vth2][iBar+num_bars*iArray],true,"",mipPeakOnly);
 
             if( fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray] == NULL ) continue;
 
@@ -865,7 +873,14 @@ int main(int argc, char** argv)
       if( iArray == 1 ) chR += 64;
       float energyMean = 0.5*((*energy)[channelIdx[chL]]+(*energy)[channelIdx[chR]]);
       TF1* func = fit_energy_LR[Vov][vth1][vth2][iBar+num_bars*iArray];
-      pass_mip_selection_array[iArray] = ( energyMean > 0.80*func->GetParameter(1) );
+      float mipPeak = func->GetParameter(1);
+      if (mipPeakOnly) {
+        pass_mip_selection_array[iArray] = ( energyMean > 0.9*mipPeak && energyMean < 1.15*mipPeak);
+      }
+      else
+      {
+        pass_mip_selection_array[iArray] = ( energyMean > 0.8*mipPeak );
+      }
     }
 
     if( !pass_mip_selection_array[0] || !pass_mip_selection_array[1] ) continue;
@@ -989,7 +1004,7 @@ int main(int argc, char** argv)
 
     // only look at bar 8 to restrict spatial distribution of hits
     int iBar = 8;
-    
+
     std::vector<long double> energyL = {0., 0.};
     std::vector<long double> energyR = {0., 0.};
     std::vector<long double> tL = {0., 0.};
