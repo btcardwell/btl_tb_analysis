@@ -1235,8 +1235,12 @@ int main(int argc, char** argv)
   std::cout << std::endl;
 
   // draw 4th plots
-  std::map<float, std::map<int, std::map<int, std::map<int, TGraphErrors*> > > > g_delta_tLR_actualRes_vs_vth1;
-  std::map<float, std::map<int, std::map<int, TGraphErrors*> > > g_tAvg_actualRes_vs_vth1;
+  std::map<float, std::map<int, std::map<int, std::map<int, TGraphErrors*> > > > g_delta_tLR_raw_actualRes_vs_vth1;
+  std::map<float, std::map<int, std::map<int, TGraphErrors*> > > g_tAvg_raw_actualRes_vs_vth1;
+  std::map<float, std::map<int, std::map<int, std::map<int, TGraphErrors*> > > > g_delta_tLR_energyCorr_actualRes_vs_vth1;
+  std::map<float, std::map<int, std::map<int, TGraphErrors*> > > g_tAvg_energyCorr_actualRes_vs_vth1;
+  std::map<float, std::map<int, std::map<int, std::map<int, TGraphErrors*> > > > g_delta_tLR_energyPhaseCorr_actualRes_vs_vth1;
+  std::map<float, std::map<int, std::map<int, TGraphErrors*> > > g_tAvg_energyPhaseCorr_actualRes_vs_vth1;
 
   for(auto mapIt : h1_delta_tLR_raw )
   {
@@ -1257,13 +1261,26 @@ int main(int argc, char** argv)
 
         for(unsigned int iBar = 8; iBar < 9; ++iBar)
         {
-          if( g_tAvg_actualRes_vs_vth1[Vov][vth2][iBar] == NULL )
+          if( g_tAvg_raw_actualRes_vs_vth1[Vov][vth2][iBar] == NULL )
           {
-            g_tAvg_actualRes_vs_vth1[Vov][vth2][iBar] = new TGraphErrors();
-            g_tAvg_actualRes_vs_vth1[Vov][vth2][iBar] -> SetName(Form("g_tAvg_actualRes_vs_vth1_bar%02d_Vov%.1f_vth2_%02d",iBar,Vov,vth2));
+            g_tAvg_raw_actualRes_vs_vth1[Vov][vth2][iBar] = new TGraphErrors();
+            g_tAvg_raw_actualRes_vs_vth1[Vov][vth2][iBar] -> SetName(Form("g_tAvg_raw_actualRes_vs_vth1_bar%02d_Vov%.1f_vth2_%02d",iBar,Vov,vth2));
+
+            g_tAvg_energyCorr_actualRes_vs_vth1[Vov][vth2][iBar] = new TGraphErrors();
+            g_tAvg_energyCorr_actualRes_vs_vth1[Vov][vth2][iBar] -> SetName(Form("g_tAvg_energyCorr_actualRes_vs_vth1_bar%02d_Vov%.1f_vth2_%02d",iBar,Vov,vth2));
+
+            g_tAvg_energyPhaseCorr_actualRes_vs_vth1[Vov][vth2][iBar] = new TGraphErrors();
+            g_tAvg_energyPhaseCorr_actualRes_vs_vth1[Vov][vth2][iBar] -> SetName(Form("g_tAvg_energyPhaseCorr_actualRes_vs_vth1_bar%02d_Vov%.1f_vth2_%02d",iBar,Vov,vth2));
           }
+
+          float delta_tAvg_raw_sigma = fit_delta_tAvg_raw[Vov][vth1][vth2]->GetParameter(2);
+          g_tAvg_raw_actualRes_vs_vth1[Vov][vth2][iBar] -> SetPoint(g_tAvg_raw_actualRes_vs_vth1[Vov][vth2][iBar]->GetN(),vth1,delta_tAvg_raw_sigma/1.414);
+
+          float delta_tAvg_energyCorr_sigma = fit_delta_tAvg_energyCorr[Vov][vth1][vth2]->GetParameter(2);
+          g_tAvg_energyCorr_actualRes_vs_vth1[Vov][vth2][iBar] -> SetPoint(g_tAvg_energyCorr_actualRes_vs_vth1[Vov][vth2][iBar]->GetN(),vth1,delta_tAvg_energyCorr_sigma/1.414);
+
           float delta_tAvg_energyPhaseCorr_sigma = fit_delta_tAvg_energyPhaseCorr[Vov][vth1][vth2]->GetParameter(2);
-          g_tAvg_actualRes_vs_vth1[Vov][vth2][iBar] -> SetPoint(g_tAvg_actualRes_vs_vth1[Vov][vth2][iBar]->GetN(),vth1,delta_tAvg_energyPhaseCorr_sigma/1.414);
+          g_tAvg_energyPhaseCorr_actualRes_vs_vth1[Vov][vth2][iBar] -> SetPoint(g_tAvg_energyPhaseCorr_actualRes_vs_vth1[Vov][vth2][iBar]->GetN(),vth1,delta_tAvg_energyPhaseCorr_sigma/1.414);
 
           for(int iArray = 0; iArray < 2; ++iArray)
           {
@@ -1282,13 +1299,25 @@ int main(int argc, char** argv)
             drawH1_deltaT(h1_delta_tLR_raw[Vov][vth1][vth2][iBar+num_bars*iArray], h1_delta_tLR_energyCorr[Vov][vth1][vth2][iBar+num_bars*iArray], "#Deltat_{LR} [ps]", "events", plotDir+"delta_tLR", fit_delta_tLR_raw[Vov][vth1][vth2][iBar+num_bars*iArray], fit_delta_tLR_energyCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
             drawH1_deltaT(h1_delta_tLR_energyCorr[Vov][vth1][vth2][iBar+num_bars*iArray], h1_delta_tLR_energyPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray], "#Deltat_{LR} [ps]", "events", plotDir+"delta_tLR", fit_delta_tLR_energyCorr[Vov][vth1][vth2][iBar+num_bars*iArray], fit_delta_tLR_energyPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray]);
 
-          if( g_delta_tLR_actualRes_vs_vth1[Vov][vth2][iBar][iArray] == NULL )
+          if( g_delta_tLR_raw_actualRes_vs_vth1[Vov][vth2][iBar][iArray] == NULL )
           {
-            g_delta_tLR_actualRes_vs_vth1[Vov][vth2][iBar][iArray] = new TGraphErrors();
-            g_delta_tLR_actualRes_vs_vth1[Vov][vth2][iBar][iArray] -> SetName(Form("g_tRes_energyPhaseCorr_vs_vth1_bar%02d_array%d_Vov%.1f_vth2_%02d",iBar,iArray,Vov,vth2));
+            g_delta_tLR_raw_actualRes_vs_vth1[Vov][vth2][iBar][iArray] = new TGraphErrors();
+            g_delta_tLR_raw_actualRes_vs_vth1[Vov][vth2][iBar][iArray] -> SetName(Form("g_tRes_raw_vs_vth1_bar%02d_array%d_Vov%.1f_vth2_%02d",iBar,iArray,Vov,vth2));
+
+            g_delta_tLR_energyCorr_actualRes_vs_vth1[Vov][vth2][iBar][iArray] = new TGraphErrors();
+            g_delta_tLR_energyCorr_actualRes_vs_vth1[Vov][vth2][iBar][iArray] -> SetName(Form("g_tRes_energyCorr_vs_vth1_bar%02d_array%d_Vov%.1f_vth2_%02d",iBar,iArray,Vov,vth2));
+
+            g_delta_tLR_energyPhaseCorr_actualRes_vs_vth1[Vov][vth2][iBar][iArray] = new TGraphErrors();
+            g_delta_tLR_energyPhaseCorr_actualRes_vs_vth1[Vov][vth2][iBar][iArray] -> SetName(Form("g_tRes_energyPhaseCorr_vs_vth1_bar%02d_array%d_Vov%.1f_vth2_%02d",iBar,iArray,Vov,vth2));
           }
+          float delta_tLR_raw_sigma = fit_delta_tLR_raw[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2);
+          g_delta_tLR_raw_actualRes_vs_vth1[Vov][vth2][iBar][iArray] -> SetPoint(g_delta_tLR_raw_actualRes_vs_vth1[Vov][vth2][iBar][iArray]->GetN(),vth1,delta_tLR_raw_sigma/2.);
+
+          float delta_tLR_energyCorr_sigma = fit_delta_tLR_energyCorr[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2);
+          g_delta_tLR_energyCorr_actualRes_vs_vth1[Vov][vth2][iBar][iArray] -> SetPoint(g_delta_tLR_energyCorr_actualRes_vs_vth1[Vov][vth2][iBar][iArray]->GetN(),vth1,delta_tLR_energyCorr_sigma/2.);
+
           float delta_tLR_energyPhaseCorr_sigma = fit_delta_tLR_energyPhaseCorr[Vov][vth1][vth2][iBar+num_bars*iArray]->GetParameter(2);
-          g_delta_tLR_actualRes_vs_vth1[Vov][vth2][iBar][iArray] -> SetPoint(g_delta_tLR_actualRes_vs_vth1[Vov][vth2][iBar][iArray]->GetN(),vth1,delta_tLR_energyPhaseCorr_sigma/2.);
+          g_delta_tLR_energyPhaseCorr_actualRes_vs_vth1[Vov][vth2][iBar][iArray] -> SetPoint(g_delta_tLR_energyPhaseCorr_actualRes_vs_vth1[Vov][vth2][iBar][iArray]->GetN(),vth1,delta_tLR_energyPhaseCorr_sigma/2.);
           }
         }
       }
@@ -1296,9 +1325,13 @@ int main(int argc, char** argv)
   }
 
   // time resolution vs. threshold
+  std::map<int, std::map<int, std::vector<TGraphErrors*> > > g_tResSummary_raw_vs_vth1_vec;
+  std::map<int, std::map<int, std::vector<std::string> > > g_tResSummary_raw_vs_vth1_labels;
+  std::map<int, std::map<int, std::vector<TGraphErrors*> > > g_tResSummary_energyCorr_vs_vth1_vec;
+  std::map<int, std::map<int, std::vector<std::string> > > g_tResSummary_energyCorr_vs_vth1_labels;
   std::map<int, std::map<int, std::vector<TGraphErrors*> > > g_tResSummary_energyPhaseCorr_vs_vth1_vec;
   std::map<int, std::map<int, std::vector<std::string> > > g_tResSummary_energyPhaseCorr_vs_vth1_labels;
-  for(auto mapIt : g_delta_tLR_actualRes_vs_vth1 )
+  for(auto mapIt : g_delta_tLR_raw_actualRes_vs_vth1 )
   {
     float Vov = mapIt.first;
     for(auto mapIt2 : mapIt.second)
@@ -1313,13 +1346,27 @@ int main(int argc, char** argv)
         {
           int iArray = mapIt4.first;
 
-          g_tResSummary_energyPhaseCorr_vs_vth1_vec[vth2][iBar].push_back(g_delta_tLR_actualRes_vs_vth1[Vov][vth2][iBar][iArray]);
+          g_tResSummary_raw_vs_vth1_vec[vth2][iBar].push_back(g_delta_tLR_raw_actualRes_vs_vth1[Vov][vth2][iBar][iArray]);
+          g_tResSummary_raw_vs_vth1_labels[vth2][iBar].push_back(Form("#Deltat_{LR}; array %i; V_{OV} = %.1f V",iArray,Vov));
+
+          g_tResSummary_energyCorr_vs_vth1_vec[vth2][iBar].push_back(g_delta_tLR_energyCorr_actualRes_vs_vth1[Vov][vth2][iBar][iArray]);
+          g_tResSummary_energyCorr_vs_vth1_labels[vth2][iBar].push_back(Form("#Deltat_{LR}; array %i; V_{OV} = %.1f V",iArray,Vov));
+
+          g_tResSummary_energyPhaseCorr_vs_vth1_vec[vth2][iBar].push_back(g_delta_tLR_energyPhaseCorr_actualRes_vs_vth1[Vov][vth2][iBar][iArray]);
           g_tResSummary_energyPhaseCorr_vs_vth1_labels[vth2][iBar].push_back(Form("#Deltat_{LR}; array %i; V_{OV} = %.1f V",iArray,Vov));
         }
 
-        g_tResSummary_energyPhaseCorr_vs_vth1_vec[vth2][iBar].push_back(g_tAvg_actualRes_vs_vth1[Vov][vth2][iBar]);
+        g_tResSummary_raw_vs_vth1_vec[vth2][iBar].push_back(g_tAvg_raw_actualRes_vs_vth1[Vov][vth2][iBar]);
+        g_tResSummary_raw_vs_vth1_labels[vth2][iBar].push_back(Form("#Deltat_{avg}; array 1 - array 0; V_{OV} = %.1f V",Vov));
+
+        g_tResSummary_energyCorr_vs_vth1_vec[vth2][iBar].push_back(g_tAvg_energyCorr_actualRes_vs_vth1[Vov][vth2][iBar]);
+        g_tResSummary_energyCorr_vs_vth1_labels[vth2][iBar].push_back(Form("#Deltat_{avg}; array 1 - array 0; V_{OV} = %.1f V",Vov));
+
+        g_tResSummary_energyPhaseCorr_vs_vth1_vec[vth2][iBar].push_back(g_tAvg_energyPhaseCorr_actualRes_vs_vth1[Vov][vth2][iBar]);
         g_tResSummary_energyPhaseCorr_vs_vth1_labels[vth2][iBar].push_back(Form("#Deltat_{avg}; array 1 - array 0; V_{OV} = %.1f V",Vov));
 
+        drawG_vector(g_tResSummary_raw_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "Time resolution [ps]", 0., 200., plotDir+"timeResolution",false,Form("g_tResSummary_raw_vs_vth1_VoV%.1f_vth2_%02d_bar%02d",Vov,vth2,iBar),&g_tResSummary_raw_vs_vth1_labels[vth2][iBar]);
+        drawG_vector(g_tResSummary_energyCorr_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "Time resolution [ps]", 0., 200., plotDir+"timeResolution",false,Form("g_tResSummary_energyCorr_vs_vth1_VoV%.1f_vth2_%02d_bar%02d",Vov,vth2,iBar),&g_tResSummary_energyCorr_vs_vth1_labels[vth2][iBar]);
         drawG_vector(g_tResSummary_energyPhaseCorr_vs_vth1_vec[vth2][iBar], "vth_{1} [DAC]", "Time resolution [ps]", 0., 200., plotDir+"timeResolution",false,Form("g_tResSummary_energyPhaseCorr_vs_vth1_VoV%.1f_vth2_%02d_bar%02d",Vov,vth2,iBar),&g_tResSummary_energyPhaseCorr_vs_vth1_labels[vth2][iBar]);
       }
     }
