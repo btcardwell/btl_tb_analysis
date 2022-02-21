@@ -344,7 +344,7 @@ void drawH1_energy(TH1F* h_LR, TH1F* h_L, TH1F* h_R,
   {
     float binCenter = h_LR -> GetBinCenter(bin);
     float binContent = h_LR -> GetBinContent(bin);
-    if( binCenter < 200 ) continue;
+    if( binCenter < 100 ) continue;
     if( binContent > max )
     {
 	  max = binContent;
