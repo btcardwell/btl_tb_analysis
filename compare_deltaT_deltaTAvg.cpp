@@ -469,6 +469,7 @@ int main(int argc, char** argv)
   int prescale = 1;    if( argc > 3 ) prescale = atoi(argv[3]);
   int pedestals = 0;   if( argc > 4 ) pedestals = atoi(argv[4]);
   int mipPeakOnly = 0;   if( argc > 5 ) mipPeakOnly = atoi(argv[5]);
+  int restrictPhase = 0;   if( argc > 6 ) restrictPhase = atoi(argv[6]);
 
   // open file
   TChain* data = new TChain("data","data");
@@ -489,6 +490,7 @@ int main(int argc, char** argv)
   std::cout << "PreScale:       " << prescale << std::endl;
   std::cout << "Pedestals:      " << pedestals << std::endl;
   std::cout << "mipPeakOnly:    " << mipPeakOnly << std::endl;
+  std::cout << "restrictPhase:  " << restrictPhase << std::endl;
   std::cout << "============================================\n\n"  << std::endl;
 
   // define branches
@@ -703,6 +705,12 @@ int main(int argc, char** argv)
 
       // require hits to be in same clock cycle to avoid complex t1fine dependencies
       if( (*t1coarse)[channelIdx[chL]] != (*t1coarse)[channelIdx[chR]] ) continue;
+
+      if( restrictPhase )
+      {
+        if( (*t1fine)[channelIdx[chL]] < 500. || (*t1fine)[channelIdx[chL]] > 700 ) continue;
+        if( (*t1fine)[channelIdx[chR]] < 500. || (*t1fine)[channelIdx[chR]] > 700 ) continue;
+      }
 
       hit_in_array_noShowerRejection[iArray] = true;
 
